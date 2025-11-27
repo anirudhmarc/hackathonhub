@@ -1,0 +1,21 @@
+{
+  "name": "AWS Malaysia AI Hackathon - Judge Portal",
+  "short_name": "AWS Hackathon Judge",
+  "description": "AWS Malaysia AI Hackathon Judging System",
+  "icons": [
+    {
+      "src": "/aws-logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/aws-logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#FF9900",
+  "background_color": "#252F3E"
+}

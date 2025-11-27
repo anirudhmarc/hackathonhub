@@ -1,0 +1,40 @@
+# Great AI Hackathon Malaysia 2025 - HackHub Robots.txt
+# AWS AI Innovation Challenge Platform
+
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+User-agent: Slackbot
+Allow: /
+
+User-agent: WhatsApp
+Allow: /
+
+User-agent: *
+Allow: /
+Crawl-delay: 2
+
+# Sitemap
+Sitemap: https://hackhub.aws-malaysia.com/sitemap.xml
+
+# Disallow private/admin areas (if any exist)
+Disallow: /admin/
+Disallow: /private/
+Disallow: /*.json$
+Disallow: /*?*utm_*
+Disallow: /*?*fbclid*
+Disallow: /*?*gclid*

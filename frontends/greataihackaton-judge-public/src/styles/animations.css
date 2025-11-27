@@ -1,0 +1,42 @@
+@keyframes glow-sweep {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.winner-glow {
+  position: relative;
+  overflow: hidden;
+}
+
+.winner-glow::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  background-size: 200% 100%;
+  animation: glow-sweep 3s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.first-place-glow::before {
+  background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.5), transparent);
+  background-size: 200% 100%;
+}
+
+.second-place-glow::before {
+  background: linear-gradient(90deg, transparent, rgba(192, 192, 192, 0.5), transparent);
+  background-size: 200% 100%;
+}
+
+.third-place-glow::before {
+  background: linear-gradient(90deg, transparent, rgba(205, 127, 50, 0.5), transparent);
+  background-size: 200% 100%;
+}

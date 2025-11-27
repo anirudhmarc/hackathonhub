@@ -1,0 +1,316 @@
+{
+    "items": [
+        {
+            "id": "19cqkc",
+            "parentId": "fhm2vc",
+            "pathPart": "{teamId}",
+            "path": "/admin/teams/{teamId}",
+            "resourceMethods": {
+                "DELETE": {},
+                "GET": {},
+                "OPTIONS": {},
+                "PUT": {}
+            }
+        },
+        {
+            "id": "2qhfkm",
+            "parentId": "zxmybhiujf",
+            "pathPart": "participant",
+            "path": "/participant"
+        },
+        {
+            "id": "3ro56t",
+            "parentId": "jdbbd4",
+            "pathPart": "judges",
+            "path": "/judge/judges",
+            "resourceMethods": {
+                "GET": {},
+                "OPTIONS": {}
+            }
+        },
+        {
+            "id": "3wi88r",
+            "parentId": "gtq685",
+            "pathPart": "{judgeId}",
+            "path": "/admin/judges/{judgeId}",
+            "resourceMethods": {
+                "DELETE": {},
+                "GET": {},
+                "OPTIONS": {},
+                "PUT": {}
+            }
+        },
+        {
+            "id": "3xzrvk",
+            "parentId": "zk5lfn",
+            "pathPart": "assignments",
+            "path": "/admin/assignments",
+            "resourceMethods": {
+                "DELETE": {},
+                "GET": {},
+                "OPTIONS": {},
+                "POST": {}
+            }
+        },
+        {
+            "id": "5kki4m",
+            "parentId": "jdbbd4",
+            "pathPart": "scores",
+            "path": "/judge/scores",
+            "resourceMethods": {
+                "GET": {},
+                "OPTIONS": {},
+                "POST": {},
+                "PUT": {}
+            }
+        },
+        {
+            "id": "884wc5",
+            "parentId": "zk5lfn",
+            "pathPart": "broadcast-email",
+            "path": "/admin/broadcast-email",
+            "resourceMethods": {
+                "OPTIONS": {},
+                "POST": {}
+            }
+        },
+        {
+            "id": "8vj5uk",
+            "parentId": "zk5lfn",
+            "pathPart": "participants",
+            "path": "/admin/participants",
+            "resourceMethods": {
+                "DELETE": {},
+                "GET": {},
+                "OPTIONS": {},
+                "POST": {},
+                "PUT": {}
+            }
+        },
+        {
+            "id": "8wwxxh",
+            "parentId": "jdbbd4",
+            "pathPart": "stages",
+            "path": "/judge/stages",
+            "resourceMethods": {
+                "GET": {},
+                "OPTIONS": {}
+            }
+        },
+        {
+            "id": "b4vy3b",
+            "parentId": "mkbx71",
+            "pathPart": "{judgeId}",
+            "path": "/judge/assignments/{judgeId}"
+        },
+        {
+            "id": "dsc2sf",
+            "parentId": "u7pkb5",
+            "pathPart": "approve",
+            "path": "/admin/participants/{id}/approve",
+            "resourceMethods": {
+                "OPTIONS": {},
+                "POST": {}
+            }
+        },
+        {
+            "id": "e0edem",
+            "parentId": "2qhfkm",
+            "pathPart": "feedback",
+            "path": "/participant/feedback",
+            "resourceMethods": {
+                "GET": {},
+                "OPTIONS": {}
+            }
+        },
+        {
+            "id": "fhm2vc",
+            "parentId": "zk5lfn",
+            "pathPart": "teams",
+            "path": "/admin/teams",
+            "resourceMethods": {
+                "DELETE": {},
+                "GET": {},
+                "OPTIONS": {},
+                "POST": {},
+                "PUT": {}
+            }
+        },
+        {
+            "id": "gtq685",
+            "parentId": "zk5lfn",
+            "pathPart": "judges",
+            "path": "/admin/judges",
+            "resourceMethods": {
+                "DELETE": {},
+                "GET": {},
+                "OPTIONS": {},
+                "POST": {},
+                "PUT": {}
+            }
+        },
+        {
+            "id": "jdbbd4",
+            "parentId": "zxmybhiujf",
+            "pathPart": "judge",
+            "path": "/judge"
+        },
+        {
+            "id": "lx7b1h",
+            "parentId": "b4vy3b",
+            "pathPart": "teams",
+            "path": "/judge/assignments/{judgeId}/teams",
+            "resourceMethods": {
+                "GET": {},
+                "OPTIONS": {}
+            }
+        },
+        {
+            "id": "m99jj6",
+            "parentId": "2qhfkm",
+            "pathPart": "problems",
+            "path": "/participant/problems",
+            "resourceMethods": {
+                "GET": {},
+                "OPTIONS": {},
+                "POST": {}
+            }
+        },
+        {
+            "id": "mkbx71",
+            "parentId": "jdbbd4",
+            "pathPart": "assignments",
+            "path": "/judge/assignments"
+        },
+        {
+            "id": "mm38qv",
+            "parentId": "3xzrvk",
+            "pathPart": "{assignmentId}",
+            "path": "/admin/assignments/{assignmentId}",
+            "resourceMethods": {
+                "DELETE": {},
+                "GET": {},
+                "OPTIONS": {}
+            }
+        },
+        {
+            "id": "opqzfm",
+            "parentId": "2qhfkm",
+            "pathPart": "submissions",
+            "path": "/participant/submissions",
+            "resourceMethods": {
+                "GET": {},
+                "OPTIONS": {},
+                "PUT": {}
+            }
+        },
+        {
+            "id": "r0jacm",
+            "parentId": "2qhfkm",
+            "pathPart": "teams",
+            "path": "/participant/teams",
+            "resourceMethods": {
+                "GET": {},
+                "OPTIONS": {},
+                "POST": {}
+            }
+        },
+        {
+            "id": "rjegpj",
+            "parentId": "zk5lfn",
+            "pathPart": "problems",
+            "path": "/admin/problems",
+            "resourceMethods": {
+                "DELETE": {},
+                "GET": {},
+                "OPTIONS": {},
+                "POST": {},
+                "PUT": {}
+            }
+        },
+        {
+            "id": "tampgq",
+            "parentId": "jdbbd4",
+            "pathPart": "problems",
+            "path": "/judge/problems",
+            "resourceMethods": {
+                "GET": {},
+                "OPTIONS": {}
+            }
+        },
+        {
+            "id": "u2nclg",
+            "parentId": "zk5lfn",
+            "pathPart": "judging-stages",
+            "path": "/admin/judging-stages",
+            "resourceMethods": {
+                "GET": {},
+                "OPTIONS": {}
+            }
+        },
+        {
+            "id": "u7pkb5",
+            "parentId": "8vj5uk",
+            "pathPart": "{id}",
+            "path": "/admin/participants/{id}",
+            "resourceMethods": {
+                "DELETE": {},
+                "GET": {},
+                "OPTIONS": {},
+                "PUT": {}
+            }
+        },
+        {
+            "id": "vrba3h",
+            "parentId": "2qhfkm",
+            "pathPart": "submission-urls",
+            "path": "/participant/submission-urls",
+            "resourceMethods": {
+                "OPTIONS": {},
+                "POST": {}
+            }
+        },
+        {
+            "id": "w4bnnd",
+            "parentId": "zk5lfn",
+            "pathPart": "leaderboard",
+            "path": "/admin/leaderboard",
+            "resourceMethods": {
+                "GET": {},
+                "OPTIONS": {}
+            }
+        },
+        {
+            "id": "wcvyqq",
+            "parentId": "rjegpj",
+            "pathPart": "{problemId}",
+            "path": "/admin/problems/{problemId}",
+            "resourceMethods": {
+                "DELETE": {},
+                "GET": {},
+                "OPTIONS": {},
+                "PUT": {}
+            }
+        },
+        {
+            "id": "ynrptm",
+            "parentId": "jdbbd4",
+            "pathPart": "teams",
+            "path": "/judge/teams",
+            "resourceMethods": {
+                "GET": {},
+                "OPTIONS": {}
+            }
+        },
+        {
+            "id": "zk5lfn",
+            "parentId": "zxmybhiujf",
+            "pathPart": "admin",
+            "path": "/admin"
+        },
+        {
+            "id": "zxmybhiujf",
+            "path": "/"
+        }
+    ]
+}

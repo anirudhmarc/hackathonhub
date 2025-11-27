@@ -1,0 +1,24 @@
+# Terraform provider binaries (too large for GitHub)
+.terraform/providers/
+
+# Terraform state backup files
+terraform.tfstate.backup
+.terraform.tfstate.lock.info
+
+# Sensitive files
+.env
+*.pem
+*.key
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
