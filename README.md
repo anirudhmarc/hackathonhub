@@ -218,7 +218,7 @@ db_name                 = "hackhub"
 db_instance_class       = "db.t3.small"
 db_allocated_storage    = 20
 db_username             = "admin"
-db_password             = "JavesonLiu1*"  # Change this!
+db_password             = "AWSuser#1"  # Change this!
 
 # Cognito Configuration
 admin_email = "tp078851@mail.apu.edu.my"
@@ -657,13 +657,3 @@ The deployment automatically creates these tables:
 - 2 Teams: "AI Innovators", "Cloud Masters"
 
 ---
-
-**Repository**: https://github.com/javesonfrancoisliu/hackathon-system.git
-
-**Last Updated**: November 2025
-
-**Terraform Version**: >= 1.5.0
-
-**AWS Provider Version**: >= 5.0
-
-**Latest Deployment**: Test-8 (487 resources)
