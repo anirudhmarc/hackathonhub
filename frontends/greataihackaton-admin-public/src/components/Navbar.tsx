@@ -11,7 +11,7 @@ const Navbar: React.FC = () => {
   const pathname = location.pathname || '/';
 
   const desktopLinkClass = (path: string) => {
-    const base = 'px-2 py-1 rounded transition-colors duration-150';
+    const base = 'px-3 py-2 rounded transition-colors duration-150';
     if (path === '/' ? pathname === '/' : pathname.startsWith(path)) {
       return `${base} text-indigo-600 font-semibold`;
     }
@@ -118,7 +118,7 @@ const Navbar: React.FC = () => {
 
           <a
             onClick={(e) => { e.preventDefault(); handleLogout(); }}
-            className="text-xs text-sky-600 hover:underline cursor-pointer"
+            className="text-sm text-sky-600 hover:underline cursor-pointer py-1 px-2"
             href="#logout"
           >
             Logout
