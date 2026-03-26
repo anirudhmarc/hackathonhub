@@ -8,8 +8,7 @@ const AuthCallback: React.FC = () => {
   const navigate = useNavigate();
   const { checkAuth } = useAuth();
   const [error, setError] = useState<string | null>(null);
-  const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [showToken, setShowToken] = useState<boolean>(true);
+  const [authenticated, setAuthenticated] = useState<boolean>(false);
 
   useEffect(() => {
     const existingToken = localStorage.getItem('access_token');
@@ -47,7 +46,7 @@ const AuthCallback: React.FC = () => {
         localStorage.setItem('id_token', response.data.id_token);
         localStorage.setItem('refresh_token', response.data.refresh_token);
 
-        setAccessToken(response.data.access_token);
+        setAuthenticated(true);
 
         checkAuth();
 
@@ -91,47 +90,13 @@ const AuthCallback: React.FC = () => {
     );
   }
 
-  if (accessToken) {
+  if (authenticated) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
-        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded max-w-3xl">
+        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded max-w-md text-center">
           <h2 className="text-xl font-bold mb-2">Authentication Successful!</h2>
-          <p className="mb-4">Your access token is:</p>
-          {showToken ? (
-            <div className="relative">
-              <pre className="bg-gray-100 p-4 rounded overflow-auto max-h-60 text-xs">
-                {accessToken}
-              </pre>
-              <button 
-                onClick={() => setShowToken(false)}
-                className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs"
-              >
-                Hide Token
-              </button>
-            </div>
-          ) : (
-            <button 
-              onClick={() => setShowToken(true)}
-              className="bg-blue-500 text-white px-3 py-1 rounded"
-            >
-              Show Token
-            </button>
-          )}
-          <p className="mt-4">You will be automatically redirected to the teams page in 3 seconds.</p>
-          <button 
-            onClick={() => {
-              const redirectPath = sessionStorage.getItem('redirectPath');
-              if (redirectPath) {
-                sessionStorage.removeItem('redirectPath');
-                navigate(redirectPath);
-              } else {
-                navigate('/teams');
-              }
-            }}
-            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            Continue
-          </button>
+          <p className="mb-4">Redirecting you to the judging system...</p>
+          <Spinner size="md" />
         </div>
       </div>
     );
