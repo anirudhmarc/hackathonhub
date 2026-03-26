@@ -255,6 +255,39 @@ resource "aws_cloudfront_origin_access_control" "portals" {
 
 
 # ============================================================================
+# CloudFront Response Headers Policy (Security)
+# ============================================================================
+
+resource "aws_cloudfront_response_headers_policy" "security_headers" {
+  name    = "${var.project_name}-${var.environment}-security-headers"
+  comment = "Security headers for all portal distributions"
+
+  security_headers_config {
+    content_type_options {
+      override = true
+    }
+    frame_options {
+      frame_option = "DENY"
+      override     = true
+    }
+    referrer_policy {
+      referrer_policy = "strict-origin-when-cross-origin"
+      override        = true
+    }
+    strict_transport_security {
+      access_control_max_age_sec = 31536000
+      include_subdomains         = true
+      override                   = true
+    }
+    xss_protection {
+      mode_block = true
+      protection = true
+      override   = true
+    }
+  }
+}
+
+# ============================================================================
 # CloudFront Distributions
 # ============================================================================
 
@@ -275,9 +308,10 @@ resource "aws_cloudfront_distribution" "admin_portal" {
   default_cache_behavior {
     allowed_methods        = ["GET", "HEAD", "OPTIONS"]
     cached_methods         = ["GET", "HEAD", "OPTIONS"]
-    target_origin_id       = "S3-${aws_s3_bucket.admin_portal.id}"
-    viewer_protocol_policy = "redirect-to-https"
-    compress               = true
+    target_origin_id           = "S3-${aws_s3_bucket.admin_portal.id}"
+    viewer_protocol_policy     = "redirect-to-https"
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.security_headers.id
+    compress                   = true
     min_ttl                = 0
     default_ttl            = 3600
     max_ttl                = 86400
@@ -339,9 +373,10 @@ resource "aws_cloudfront_distribution" "judge_portal" {
   default_cache_behavior {
     allowed_methods        = ["GET", "HEAD", "OPTIONS"]
     cached_methods         = ["GET", "HEAD", "OPTIONS"]
-    target_origin_id       = "S3-${aws_s3_bucket.judge_portal.id}"
-    viewer_protocol_policy = "redirect-to-https"
-    compress               = true
+    target_origin_id           = "S3-${aws_s3_bucket.judge_portal.id}"
+    viewer_protocol_policy     = "redirect-to-https"
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.security_headers.id
+    compress                   = true
     min_ttl                = 0
     default_ttl            = 3600
     max_ttl                = 86400
@@ -403,9 +438,10 @@ resource "aws_cloudfront_distribution" "participant_portal" {
   default_cache_behavior {
     allowed_methods        = ["GET", "HEAD", "OPTIONS"]
     cached_methods         = ["GET", "HEAD", "OPTIONS"]
-    target_origin_id       = "S3-${aws_s3_bucket.participant_portal.id}"
-    viewer_protocol_policy = "redirect-to-https"
-    compress               = true
+    target_origin_id           = "S3-${aws_s3_bucket.participant_portal.id}"
+    viewer_protocol_policy     = "redirect-to-https"
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.security_headers.id
+    compress                   = true
     min_ttl                = 0
     default_ttl            = 3600
     max_ttl                = 86400
