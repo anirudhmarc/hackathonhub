@@ -153,7 +153,7 @@ const createQueryFn = (queryKey: string, apiCall: () => Promise<any>, options: Q
 
 api.interceptors.request.use(
   (config) => {
-    const idToken = localStorage.getItem('id_token');
+    const idToken = sessionStorage.getItem('id_token');
     if (idToken) {
       config.headers.Authorization = `Bearer ${idToken}`;
     }
@@ -175,7 +175,7 @@ api.interceptors.response.use(
       originalRequest._retry = true;
       
       try {
-        const refreshToken = localStorage.getItem('refresh_token');
+        const refreshToken = sessionStorage.getItem('refresh_token');
         
         if (!refreshToken) {
           return Promise.resolve({ data: [] });
@@ -196,16 +196,16 @@ api.interceptors.response.use(
           }
         });
         
-        localStorage.setItem('access_token', response.data.access_token);
-        localStorage.setItem('id_token', response.data.id_token);
+        sessionStorage.setItem('access_token', response.data.access_token);
+        sessionStorage.setItem('id_token', response.data.id_token);
         
         originalRequest.headers.Authorization = `Bearer ${response.data.id_token}`;
         
         return api(originalRequest);
       } catch (refreshError) {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('id_token');
-        localStorage.removeItem('refresh_token');
+        sessionStorage.removeItem('access_token');
+        sessionStorage.removeItem('id_token');
+        sessionStorage.removeItem('refresh_token');
         return Promise.resolve({ data: [] });
       }
     }

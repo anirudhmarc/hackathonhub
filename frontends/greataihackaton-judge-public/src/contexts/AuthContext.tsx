@@ -48,9 +48,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const checkAuth = () => {
     setIsLoading(true);
     
-    const storedAccessToken = localStorage.getItem('access_token');
-    const storedIdToken = localStorage.getItem('id_token');
-    const storedUserName = localStorage.getItem('user_name');
+    const storedAccessToken = sessionStorage.getItem('access_token');
+    const storedIdToken = sessionStorage.getItem('id_token');
+    const storedUserName = sessionStorage.getItem('user_name');
     
     let newAuthState = false;
     let newUser = null;
@@ -72,21 +72,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             isUserJudge = true;
           }
           
-          localStorage.setItem('user_name', newUser.name);
+          sessionStorage.setItem('user_name', newUser.name);
           if (newUser.email) {
-            localStorage.setItem('user_email', newUser.email);
+            sessionStorage.setItem('user_email', newUser.email);
           }
         } else {
-          localStorage.removeItem('access_token');
-          localStorage.removeItem('id_token');
-          localStorage.removeItem('refresh_token');
-          localStorage.removeItem('user_name');
+          sessionStorage.removeItem('access_token');
+          sessionStorage.removeItem('id_token');
+          sessionStorage.removeItem('refresh_token');
+          sessionStorage.removeItem('user_name');
         }
       } catch (error) {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('id_token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('user_name');
+        sessionStorage.removeItem('access_token');
+        sessionStorage.removeItem('id_token');
+        sessionStorage.removeItem('refresh_token');
+        sessionStorage.removeItem('user_name');
       }
     } else if (storedUserName) {
       newUser = { name: storedUserName };
@@ -118,10 +118,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const logout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('id_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user_name');
+    sessionStorage.removeItem('access_token');
+    sessionStorage.removeItem('id_token');
+    sessionStorage.removeItem('refresh_token');
+    sessionStorage.removeItem('user_name');
     
     setAccessToken(null);
     setIdToken(null);

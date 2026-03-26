@@ -11,7 +11,7 @@ const AuthCallback: React.FC = () => {
   const [authenticated, setAuthenticated] = useState<boolean>(false);
 
   useEffect(() => {
-    const existingToken = localStorage.getItem('access_token');
+    const existingToken = sessionStorage.getItem('access_token');
     if (existingToken) {
       const redirectPath = sessionStorage.getItem('redirectPath');
       if (redirectPath) {
@@ -42,9 +42,9 @@ const AuthCallback: React.FC = () => {
           }
         });
 
-        localStorage.setItem('access_token', response.data.access_token);
-        localStorage.setItem('id_token', response.data.id_token);
-        localStorage.setItem('refresh_token', response.data.refresh_token);
+        sessionStorage.setItem('access_token', response.data.access_token);
+        sessionStorage.setItem('id_token', response.data.id_token);
+        sessionStorage.setItem('refresh_token', response.data.refresh_token);
 
         setAuthenticated(true);
 

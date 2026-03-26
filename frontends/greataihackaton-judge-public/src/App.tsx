@@ -56,7 +56,7 @@ const AuthCodeHandler = () => {
     const urlParams = new URLSearchParams(location.search);
     const code = urlParams.get('code');
     
-    const hasTokens = localStorage.getItem('access_token') && localStorage.getItem('id_token');
+    const hasTokens = sessionStorage.getItem('access_token') && sessionStorage.getItem('id_token');
     
     if (code && !hasTokens && !isProcessing) {
       setIsProcessing(true);
@@ -82,20 +82,20 @@ const AuthCodeHandler = () => {
             }
           });
           
-          localStorage.setItem('access_token', response.data.access_token);
-          localStorage.setItem('id_token', response.data.id_token);
+          sessionStorage.setItem('access_token', response.data.access_token);
+          sessionStorage.setItem('id_token', response.data.id_token);
           if (response.data.refresh_token) {
-            localStorage.setItem('refresh_token', response.data.refresh_token);
+            sessionStorage.setItem('refresh_token', response.data.refresh_token);
           }
           
           const idToken = response.data.id_token;
           const payload = JSON.parse(atob(idToken.split('.')[1]));
           
           const userName = payload.name || payload.email || payload['cognito:username'] || 'Unknown User';
-          localStorage.setItem('user_name', userName);
+          sessionStorage.setItem('user_name', userName);
           
           if (payload.email) {
-            localStorage.setItem('user_email', payload.email);
+            sessionStorage.setItem('user_email', payload.email);
           }
           
           const isAuthenticated = checkAuth();
@@ -109,9 +109,9 @@ const AuthCodeHandler = () => {
           setProcessingError(err.message || 'Failed to process authentication');
           setIsProcessing(false);
           
-          localStorage.removeItem('access_token');
-          localStorage.removeItem('id_token');
-          localStorage.removeItem('refresh_token');
+          sessionStorage.removeItem('access_token');
+          sessionStorage.removeItem('id_token');
+          sessionStorage.removeItem('refresh_token');
           
           navigate('/', { replace: true });
         }

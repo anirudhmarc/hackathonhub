@@ -23,7 +23,7 @@ export const JudgeSelect = () => {
   const [newJudgeEmail, setNewJudgeEmail] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   useEffect(() => {
-    const userEmail = localStorage.getItem('user_email');
+    const userEmail = sessionStorage.getItem('user_email');
     if (userEmail) {
       setNewJudgeEmail(userEmail);
     }
