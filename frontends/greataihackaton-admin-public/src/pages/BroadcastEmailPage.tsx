@@ -48,7 +48,7 @@ const JUDGE_CREDENTIALS_TEMPLATE = `<body style="margin: 0; padding: 0; backgrou
                 <tr>
                   <td style="padding: 15px;">
                     <p style="font-size: 16px; margin: 0; line-height: 24px; color: #555555;"><strong>Email:</strong> [email]</p>
-                    <p style="font-size: 16px; margin: 0; line-height: 24px; color: #555555;"><strong>Password:</strong> greataihackathon2025@APU</p>
+                    <p style="font-size: 16px; margin: 0; line-height: 24px; color: #555555;"><strong>Password:</strong> (sent separately for security)</p>
                   </td>
                 </tr>
               </table>
