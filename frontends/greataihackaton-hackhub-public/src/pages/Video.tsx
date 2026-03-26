@@ -12,6 +12,8 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import axios from 'axios';
 import { UploadedFile } from '@/types/files';
+import { getMimeTypeFromExtension, getFileTypeInfo, formatFileSize, constructS3PublicUrl, validateRepositoryUrl, isPlaceholderVideo } from '@/utils/videoUtils';
+import { useSubmissionTimer } from '@/hooks/useSubmissionTimer';
 
 const API_GATEWAY_BASE_URL = import.meta.env.VITE_API_URL;
 const S3_BUCKET_NAME = import.meta.env.VITE_S3_BUCKET_NAME;
@@ -23,109 +25,7 @@ const SUBMISSION_END_DATE = new Date(import.meta.env.VITE_SUBMISSION_END_DATE);
 const FINAL_SUBMISSION_START_DATE = new Date(import.meta.env.VITE_FINAL_SUBMISSION_START_DATE || import.meta.env.VITE_SUBMISSION_START_DATE);
 const FINAL_SUBMISSION_END_DATE = new Date(import.meta.env.VITE_FINAL_SUBMISSION_END_DATE || import.meta.env.VITE_SUBMISSION_END_DATE);
 
-const getMimeTypeFromExtension = (fileName: string): string => {
-  const extension = fileName.toLowerCase().split('.').pop() || '';
-  const mimeTypes: Record<string, string> = {
-    'mp4': 'video/mp4',
-    'webm': 'video/webm',
-    'ogg': 'video/ogg',
-    'ogv': 'video/ogg',
-    'avi': 'video/avi',
-    'mov': 'video/quicktime',
-    'wmv': 'video/x-ms-wmv',
-    'mkv': 'video/x-matroska',
-    'flv': 'video/x-flv',
-    '3gp': 'video/3gpp',
-    'm4v': 'video/mp4',
-    'mpg': 'video/mpeg',
-    'mpeg': 'video/mpeg',
-    'mts': 'video/mp2t',
-    'm2ts': 'video/mp2t',
-    'ts': 'video/mp2t',
-    'vob': 'video/x-ms-vob',
-    'rm': 'video/x-pn-realvideo',
-    'rmvb': 'video/x-pn-realvideo',
-    'asf': 'video/x-ms-asf',
-    'f4v': 'video/x-f4v',
-    'divx': 'video/x-divx',
-    'xvid': 'video/x-xvid'
-  };
-  return mimeTypes[extension] || 'video/mp4';
-};
-
-const getFileTypeInfo = (fileName: string) => {
-  const extension = fileName.toLowerCase().split('.').pop() || '';
-  const commonColor = 'bg-blue-500 hover:bg-blue-600';
-  const commonTextColor = 'text-white';
-
-  switch (extension) {
-    case 'pdf':
-      return { icon: FileText, label: 'PDF', color: commonColor, textColor: commonTextColor };
-    case 'png':
-    case 'jpg':
-    case 'jpeg':
-    case 'gif':
-    case 'svg':
-    case 'webp':
-      return { icon: Image, label: 'IMG', color: commonColor, textColor: commonTextColor };
-    case 'mp4':
-    case 'avi':
-    case 'mov':
-    case 'wmv':
-    case 'mkv':
-    case 'webm':
-    case 'flv':
-    case '3gp':
-    case 'm4v':
-    case 'ogv':
-    case 'ogg':
-    case 'mts':
-    case 'm2ts':
-    case 'ts':
-    case 'vob':
-    case 'rm':
-    case 'rmvb':
-    case 'asf':
-    case 'f4v':
-    case 'swf':
-    case 'mpg':
-    case 'mpeg':
-    case 'divx':
-    case 'xvid':
-    case 'h264':
-    case 'h265':
-    case 'hevc':
-    case 'av1':
-    case 'vp8':
-    case 'vp9':
-      return { icon: Play, label: 'VIDEO', color: commonColor, textColor: commonTextColor };
-    case 'docx':
-    case 'doc':
-    case 'txt':
-    case 'rtf':
-      return { icon: FileText, label: 'DOC', color: commonColor, textColor: commonTextColor };
-    case 'pptx':
-    case 'ppt':
-      return { icon: FileText, label: 'PPT', color: commonColor, textColor: commonTextColor };
-    case 'xlsx':
-    case 'xls':
-    case 'csv':
-      return { icon: FileText, label: 'SHEET', color: commonColor, textColor: commonTextColor };
-    case 'zip':
-    case 'rar':
-    case '7z':
-    case 'tar':
-    case 'gz':
-      return { icon: Archive, label: 'ZIP', color: commonColor, textColor: commonTextColor };
-    case 'json':
-    case 'xml':
-    case 'yaml':
-    case 'yml':
-      return { icon: FileText, label: 'DATA', color: commonColor, textColor: commonTextColor };
-    default:
-      return { icon: File, label: 'FILE', color: commonColor, textColor: commonTextColor };
-  }
-};
+// getMimeTypeFromExtension, getFileTypeInfo moved to @/utils/videoUtils
 
 interface BackendSubmissionData {
     submission_video_url: string | null;
@@ -265,14 +165,6 @@ const VideoSubmissionPage: React.FC = () => {
     return () => clearInterval(timer);
   }, [currentStartDate, currentEndDate, roundType]);
 
-  const constructS3PublicUrl = (s3Key: string | null | undefined) => {
-      if (!s3Key) return null;
-      if (s3Key.startsWith('http://') || s3Key.startsWith('https://')) {
-          return s3Key;
-      }
-      return `https://${S3_BUCKET_NAME}.s3.${REGION}.amazonaws.com/${s3Key}`;
-  };
-
   const fetchSubmissionData = async () => {
     if (!idToken || !user?.teamId) return;
     
@@ -288,12 +180,6 @@ const VideoSubmissionPage: React.FC = () => {
     } catch (error) {
       console.error("Error fetching submission data:", error);
     }
-  };
-
-  const validateRepositoryUrl = (url: string) => {
-    const gitlabUrlRegex = /^https?:\/\/gitlab\.com\/[\w.-]+(\/[\w.-]+)?(\/.*)?$/;
-    const githubUrlRegex = /^https?:\/\/github\.com\/[\w.-]+(\/[\w.-]+)?(\/.*)?$/;
-    return gitlabUrlRegex.test(url) || githubUrlRegex.test(url);
   };
 
   const validateAndSetVideo = (file: File) => {
@@ -530,30 +416,6 @@ const VideoSubmissionPage: React.FC = () => {
       setIsDragging(false);
       if (e.dataTransfer.files) handleFiles(Array.from(e.dataTransfer.files));
     }
-  };
-
-  const formatFileSize = (sizeInBytes: number) => {
-    if (sizeInBytes < 1024) return sizeInBytes + " B";
-    if (sizeInBytes < 1024 * 1024) return (sizeInBytes / 1024).toFixed(1) + " KB";
-    return (sizeInBytes / (1024 * 1024)).toFixed(1) + " MB";
-  };
-
-  const isPlaceholderVideo = (videoUrl: string | null | undefined): boolean => {
-    if (!videoUrl) return true;
-    
-    
-    const placeholders = [
-      "https://placeholder.video/no-video-uploaded",
-      "-",
-      "",
-      "https://example.com/null",
-      "no-video",
-      "placeholder"
-    ];
-    
-    return placeholders.some(placeholder => 
-      videoUrl === placeholder || videoUrl.includes("placeholder")
-    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
