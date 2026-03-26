@@ -47,6 +47,15 @@ const DashboardPage: React.FC = () => {
 
     const headers = { Authorization: token };
 
+    const count = (result: PromiseSettledResult<{ data: unknown }>) => {
+      if (result.status !== 'fulfilled') return 0;
+      const d = result.value.data;
+      if (Array.isArray(d)) return d.length;
+      if (d && typeof d === 'object' && 'teams' in d) return (d as { teams: unknown[] }).teams?.length ?? 0;
+      if (d && typeof d === 'object' && 'problems' in d) return (d as { problems: unknown[] }).problems?.length ?? 0;
+      return 0;
+    };
+
     Promise.allSettled([
       axios.get(`${API_URL}/admin/participants`, { headers }),
       axios.get(`${API_URL}/admin/teams`, { headers }),
@@ -55,12 +64,15 @@ const DashboardPage: React.FC = () => {
       axios.get(`${API_URL}/admin/assignments`, { headers }),
     ]).then(([participants, teams, judges, problems, assignments]) => {
       setStats({
-        participants: participants.status === 'fulfilled' ? (Array.isArray(participants.value.data) ? participants.value.data.length : 0) : 0,
-        teams: teams.status === 'fulfilled' ? (teams.value.data?.teams?.length ?? (Array.isArray(teams.value.data) ? teams.value.data.length : 0)) : 0,
-        judges: judges.status === 'fulfilled' ? (Array.isArray(judges.value.data) ? judges.value.data.length : 0) : 0,
-        problems: problems.status === 'fulfilled' ? (problems.value.data?.problems?.length ?? (Array.isArray(problems.value.data) ? problems.value.data.length : 0)) : 0,
-        assignments: assignments.status === 'fulfilled' ? (Array.isArray(assignments.value.data) ? assignments.value.data.length : 0) : 0,
+        participants: count(participants),
+        teams: count(teams),
+        judges: count(judges),
+        problems: count(problems),
+        assignments: count(assignments),
       });
+    }).catch(() => {
+      // Stats remain at 0 on failure — non-critical
+    }).finally(() => {
       setLoading(false);
     });
   }, [user]);
