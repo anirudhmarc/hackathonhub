@@ -488,16 +488,10 @@ const ResultsPage: React.FC = () => {
               headers: { 'Authorization': `Bearer ${idToken}`, 'Content-Type': 'application/json' }
             });
           } else {
-
-            await axios.put(`http://localhost:4001/flags/${teamId}`, { [flagKey]: next });
+            console.warn('No idToken available, skipping flag persistence for', teamId, flagKey);
           }
         } catch (err) {
-
-          try {
-            await axios.put(`http://localhost:4001/flags/${teamId}`, { [flagKey]: next });
-          } catch (err2) {
-            console.error('Failed to persist auto-flag for', teamId, flagKey, err2);
-          }
+          console.error('Failed to persist auto-flag for', teamId, flagKey, err);
         }
       }
     })();

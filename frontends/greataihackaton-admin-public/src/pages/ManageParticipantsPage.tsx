@@ -282,8 +282,8 @@ const ManageParticipantsPage: React.FC = () => {
   const { totalTeams, totalPeople, teamSizeBreakdown, studentTeamsCount, corporateTeamsCount, studentPeopleCount, corporatePeopleCount } = useMemo(() => {
     const totalTeamsCount = participants.length;
       
-  const studentTeams = participants.filter(p => p.track === 'student');
-  const corporateTeams = participants.filter(p => p.track === 'corporate');
+  const studentTeams = participants.filter(p => p.track?.toLowerCase() === 'student');
+  const corporateTeams = participants.filter(p => p.track?.toLowerCase() === 'corporate');
   const studentPeopleCount = studentTeams.reduce((sum, p) => sum + 1 + (p.members || []).length, 0);
   const corporatePeopleCount = corporateTeams.reduce((sum, p) => sum + 1 + (p.members || []).length, 0);
   const totalPeopleCount = studentPeopleCount + corporatePeopleCount;
@@ -310,7 +310,7 @@ const ManageParticipantsPage: React.FC = () => {
     
     
     if (trackFilter !== 'all') {
-      result = result.filter(p => p.track === trackFilter);
+      result = result.filter(p => p.track?.toLowerCase() === trackFilter.toLowerCase());
     }
 
     

@@ -48,7 +48,7 @@ const TeamsPage = () => {
   
   const [selectedTrack, setSelectedTrack] = useState<string>('all-tracks');
   const [selectedProblem, setSelectedProblem] = useState<string>('all-problems');
-  const [submissionFilter, setSubmissionFilter] = useState<string>('submitted');
+  const [submissionFilter, setSubmissionFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(1);

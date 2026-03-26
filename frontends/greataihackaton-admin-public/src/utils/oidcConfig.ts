@@ -5,7 +5,7 @@ export const getOidcConfig = () => ({
   client_id: import.meta.env.VITE_ADMIN_COGNITO_CLIENT_ID,
   redirect_uri: window.location.origin + '/callback',
   response_type: 'code',
-  scope: 'email openid phone',
+  scope: 'email openid profile',
   post_logout_redirect_uri: window.location.origin + '/logout',
   automaticSilentRenew: true,
   loadUserInfo: true,
