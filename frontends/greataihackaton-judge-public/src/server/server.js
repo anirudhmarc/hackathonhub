@@ -14,7 +14,14 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors());
+app.use(cors({
+  origin: [
+    process.env.VITE_ADMIN_COGNITO_REDIRECT_URI?.replace('/callback', '') || 'http://localhost:8080',
+    'http://localhost:8080',
+    'http://localhost:3000',
+  ].filter(Boolean),
+  credentials: true,
+}));
 app.use(express.json());
 
 testConnection()
