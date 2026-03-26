@@ -188,7 +188,7 @@ const ManageAssignmentsPage = memo(() => {
         setProblems(problemsData);
       } else {
         const map = new Map<string, { id: string; title: string }>();
-        (teamsData || []).forEach((t: any) => {
+        (teamsData || []).forEach((t: Team) => {
           if (t.problem_id) {
             const id = t.problem_id;
             const title = t.problem_title || t.problem_description || id;

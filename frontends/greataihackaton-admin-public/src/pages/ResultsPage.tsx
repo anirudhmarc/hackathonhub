@@ -302,10 +302,14 @@ const ResultsPage: React.FC = () => {
   const filteredRankings = useMemo(() => {
 
       if (flagFilter) {
-        const onlyFlagged = teamRankings.filter(t => !!(t as any)[flagFilter]);
+        const onlyFlagged = teamRankings.filter(t => {
+          if (flagFilter === 'top20_student') return !!t.top20_student;
+          if (flagFilter === 'top10_corporate') return !!t.top10_corporate;
+          return false;
+        });
 
         return onlyFlagged.sort((a, b) => {
-          let valueA: any, valueB: any;
+          let valueA: string | number, valueB: string | number;
           switch (sortBy) {
             case 'name':
               valueA = a.name.toLowerCase();
@@ -381,7 +385,7 @@ const ResultsPage: React.FC = () => {
 
 
       return filtered.sort((a, b) => {
-        let valueA: any, valueB: any;
+        let valueA: string | number, valueB: string | number;
         
         switch (sortBy) {
           case 'name':
