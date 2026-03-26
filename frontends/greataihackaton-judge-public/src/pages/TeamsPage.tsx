@@ -431,17 +431,17 @@ const TeamsPage = () => {
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-6">
           <div className="text-center">
             <div className="flex justify-center mb-3">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-yellow-600">
-                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
-                <path d="M12 9v4"/>
-                <circle cx="12" cy="17" r="1"/>
-              </svg>
+              <AlertCircle className="h-6 w-6 text-yellow-600" />
             </div>
-            
-            <h3 className="text-lg font-semibold text-yellow-800 mb-2">Loading issue...</h3>
-            
+
+            <h3 className="text-lg font-semibold text-yellow-800 mb-2">Judge Profile Not Found</h3>
+            <p className="text-yellow-700 text-sm mb-4">
+              Your email ({user.email || 'unknown'}) is not registered as a judge.
+              Please contact an admin to add your email to the judges list, then refresh.
+            </p>
+
             <div className="flex justify-center">
-              <Button 
+              <Button
                 onClick={() => window.location.reload()}
                 className="bg-yellow-600 hover:bg-yellow-700 text-white"
               >
