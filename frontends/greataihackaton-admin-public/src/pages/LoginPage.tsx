@@ -51,15 +51,15 @@ const LoginPage: React.FC = () => {
           <p className="text-gray-600">Admin System</p>
         </div>
 
-        <div className="space-y-6">
-          <div className="bg-blue-50 p-4 rounded-md text-blue-800 text-sm text-center">
-            <p>Please sign in to access the hackathon admin system.</p>
-          </div>
+        <div className="space-y-4">
+          <p className="text-sm text-gray-500 text-center">
+            Sign in to manage participants, teams, and judging.
+          </p>
 
-          <Button 
-            onClick={handleLoginClick} 
+          <Button
+            onClick={handleLoginClick}
             variant="default"
-            className="w-full py-6 text-lg shadow-sm bg-indigo-600 hover:bg-indigo-700 text-white"
+            className="w-full py-6 text-lg shadow-sm"
           >
             Sign in with Cognito
           </Button>
