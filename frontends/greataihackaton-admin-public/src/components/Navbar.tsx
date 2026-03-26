@@ -80,9 +80,6 @@ const Navbar: React.FC = () => {
             <li>
               <Link to="/assignments" className={desktopLinkClass('/assignments')}>Assignments</Link>
             </li>
-            {/* <li>
-              <Link to="/broadcast" className={desktopLinkClass('/broadcast')}>Broadcasts</Link>
-            </li> */}
             <li>
               <Link to="/leaderboard" className={desktopLinkClass('/leaderboard')}>Leaderboards</Link>
             </li>
