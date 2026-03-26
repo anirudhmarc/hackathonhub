@@ -98,7 +98,7 @@ const isCacheValid = (key: string, timeout: number = DEFAULT_CACHE_TIMEOUT): boo
   return age < timeout;
 };
 
-const setCacheData = (key: string, data: any): void => {
+const setCacheData = (key: string, data: unknown): void => {
   try {
     const cacheKeys = Object.keys(localStorage).filter(k => k.startsWith('cache_'));
     if (cacheKeys.length >= CACHE_SIZE_LIMIT) {
@@ -123,7 +123,7 @@ const setCacheData = (key: string, data: any): void => {
   }
 };
 
-const getCacheData = (key: string): any => {
+const getCacheData = (key: string): unknown => {
   try {
     const cached = localStorage.getItem(getCacheKey(key));
     return cached ? JSON.parse(cached) : null;
@@ -227,7 +227,7 @@ export const apiService = {
   getJudgingStages: () => api.get('/judge/stages'),
   getAllTeams: () => api.get('/judge/teams'),
   getAssignedTeams: (judgeId: string, stageId: string) => api.get(`/judge/assignments/${judgeId}/teams?stage_id=${stageId}`),
-  submitScore: (scoreData: any) => api.post('/judge/scores', scoreData),
+  submitScore: (scoreData: Record<string, unknown>) => api.post('/judge/scores', scoreData),
   createJudge: (name: string, email?: string) => api.post('/judges', { name, email }),
 };
 
