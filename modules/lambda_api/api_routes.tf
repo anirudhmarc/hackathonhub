@@ -262,6 +262,7 @@ locals {
     "POST:/participant/teams"           = "PostStudentTeam"
     "GET:/participant/problems"         = "GetStudentProblem"
     "POST:/participant/problems"        = "PostStudentProblem"
+    "PUT:/participant/problems"         = "PostStudentProblem"
     "GET:/participant/submissions"      = "GetStudentSubmission"
     "PUT:/participant/submissions"      = "UpdateSubmissionDetails"
     "POST:/participant/submission-urls" = "GetSubmissionPresignedUrls"

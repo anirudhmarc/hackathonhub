@@ -1,19 +1,21 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from 'react-oidc-context';
 import { Spinner } from '@/components/ui/spinner';
 
 const LogoutPage: React.FC = () => {
 	const navigate = useNavigate();
+	const { removeUser } = useAuth();
 
 	useEffect(() => {
-		localStorage.clear();
-		sessionStorage.clear();
-		const timer = setTimeout(() => {
+		const doLogout = async () => {
+			await removeUser();
+			localStorage.clear();
+			sessionStorage.clear();
 			navigate('/login', { replace: true });
-		}, 200);
-
-		return () => clearTimeout(timer);
-	}, [navigate]);
+		};
+		doLogout();
+	}, [navigate, removeUser]);
 
 	return (
 		<div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">

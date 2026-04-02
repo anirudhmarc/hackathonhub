@@ -251,7 +251,7 @@ const Problems = () => {
       }
 
       try {
-      const response = await axios.put(
+      const response = await axios.post(
         `${API_GATEWAY_BASE_URL}/participant/problems`,
         {
           problemId: problemToSelect

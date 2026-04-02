@@ -82,9 +82,13 @@ export const ScoringCard = memo(({
   const teamNumber = useMemo(() => String(team.id).split('-').pop(), [team.id]);
 
   const additionalMaterials = useMemo(() => {
-    return team.submission_additional_materials_url 
-      ? JSON.parse(team.submission_additional_materials_url) 
-      : [];
+    if (!team.submission_additional_materials_url) return [];
+    try {
+      const parsed = JSON.parse(team.submission_additional_materials_url);
+      return Array.isArray(parsed) ? parsed : [team.submission_additional_materials_url];
+    } catch {
+      return [team.submission_additional_materials_url];
+    }
   }, [team.submission_additional_materials_url]);
 
   const effectiveVideoUrl = useMemo(() => {

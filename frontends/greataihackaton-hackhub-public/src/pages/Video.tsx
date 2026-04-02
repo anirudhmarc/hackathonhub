@@ -805,6 +805,7 @@ const VideoSubmissionPage: React.FC = () => {
                                                 <video
                                                     src={constructS3PublicUrl(user.videoUrl)}
                                                     controls
+                                                    crossOrigin="anonymous"
                                                     preload="metadata"
                                                     className="w-full h-full object-contain"
                                                     onError={(e) => {
@@ -1103,6 +1104,7 @@ const VideoSubmissionPage: React.FC = () => {
                           <video
                             src={constructS3PublicUrl(user.videoUrl)}
                             controls
+                            crossOrigin="anonymous"
                             preload="metadata"
                             className="w-full h-full object-contain"
                             onError={(e) => {

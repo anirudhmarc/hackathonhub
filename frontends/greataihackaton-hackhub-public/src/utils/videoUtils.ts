@@ -76,9 +76,11 @@ export const formatFileSize = (bytes: number): string => {
 };
 
 export const constructS3PublicUrl = (s3Key: string): string => {
+  if (!s3Key || s3Key === 'null' || s3Key === 'undefined') return '';
+  // If already a full URL (e.g., presigned URL), return as-is
+  if (s3Key.startsWith('https://')) return s3Key;
   const bucketName = import.meta.env.VITE_S3_BUCKET_NAME;
   const region = import.meta.env.VITE_AWS_REGION;
-  if (!s3Key || s3Key === 'null' || s3Key === 'undefined') return '';
   return `https://${bucketName}.s3.${region}.amazonaws.com/${s3Key}`;
 };
 

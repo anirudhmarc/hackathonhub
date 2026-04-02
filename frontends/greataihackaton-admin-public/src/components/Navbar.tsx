@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth as useOidcAuth } from 'react-oidc-context';
 
 const Navbar: React.FC = () => {
-  const { user } = useOidcAuth();
+  const { user, removeUser } = useOidcAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -26,19 +26,23 @@ const Navbar: React.FC = () => {
     return `${base} text-gray-700 hover:bg-gray-50`;
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    // Save id_token before clearing OIDC state
+    const idToken = user?.id_token;
+
+    // Clear OIDC in-memory state so isAuthenticated becomes false
+    await removeUser();
+
     localStorage.clear();
     sessionStorage.clear();
 
     const cognitoDomain = import.meta.env.VITE_ADMIN_COGNITO_AUTH_DOMAIN;
     const clientId = import.meta.env.VITE_ADMIN_COGNITO_CLIENT_ID;
-    const postLogoutRedirectUri = import.meta.env.VITE_ADMIN_COGNITO_LOGOUT_URI || `${window.location.origin}/logout`;
+    const postLogoutRedirectUri = import.meta.env.VITE_ADMIN_COGNITO_LOGOUT_URI || window.location.origin;
 
     if (cognitoDomain && clientId) {
-      // Ensure cognitoDomain has https:// prefix
       const domain = cognitoDomain.startsWith('http') ? cognitoDomain : `https://${cognitoDomain}`;
       let logoutUrl = `${domain.replace(/\/$/, '')}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(postLogoutRedirectUri)}`;
-      const idToken = (user as any)?.id_token;
       if (idToken) {
         logoutUrl += `&id_token_hint=${idToken}`;
       }
@@ -46,7 +50,8 @@ const Navbar: React.FC = () => {
       return;
     }
 
-    navigate('/logout', { replace: true });
+    // Fallback if Cognito domain not configured
+    navigate('/login', { replace: true });
   };
 
   return (

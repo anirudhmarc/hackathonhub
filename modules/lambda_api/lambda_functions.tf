@@ -395,7 +395,7 @@ locals {
     # ========================================================================
     GetJudgeTeams = {
       group            = "judge"
-      permissions      = ["dynamodb", "secretsmanager"]
+      permissions      = ["dynamodb", "s3", "secretsmanager"]
       handler          = "index.handler"
       runtime          = "nodejs22.x"
       timeout          = 30
@@ -467,7 +467,7 @@ locals {
 
     GetAssignedTeams = {
       group            = "judge"
-      permissions      = ["dynamodb", "secretsmanager"]
+      permissions      = ["dynamodb", "s3", "secretsmanager"]
       handler          = "index.handler"
       runtime          = "nodejs22.x"
       timeout          = 30
