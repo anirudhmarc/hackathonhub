@@ -6,7 +6,8 @@ Production-ready, enterprise-grade Terraform infrastructure for the HackHub hack
 
 ```bash
 # 1. Configure your deployment
-# Edit terraform.tfvars - update project_name, vpc_cidr, and db_password
+cp terraform.tfvars.example terraform.tfvars
+# Edit terraform.tfvars — MUST change: project_name, vpc_cidr, db_password, admin_email
 
 # 2. Initialize Terraform
 terraform init
@@ -17,9 +18,11 @@ terraform plan
 # 4. Apply infrastructure (creates all 487 resources)
 terraform apply -auto-approve
 
-# 5. View outputs
+# 5. View outputs (CloudFront URLs for each portal)
 terraform output
 ```
+
+> **Important:** `terraform.tfvars` contains secrets and is gitignored. Never commit it.
 
 ## ✅ Latest Deployment (Test-8)
 
@@ -203,14 +206,16 @@ terraform-code/
 
 ### Required Variables (terraform.tfvars)
 
+Copy `terraform.tfvars.example` to `terraform.tfvars` and customize:
+
 ```hcl
-# Project Configuration
-project_name = "hackhub-test-8"  # Change for each deployment
+# Project Configuration — MUST change project_name to avoid resource conflicts
+project_name = "hackhub-YOUR-NAME"  # Change for each deployment
 environment  = "prod"
 aws_region   = "ap-southeast-2"
 
 # Network Configuration
-vpc_cidr = "10.8.0.0/16"  # Change for each deployment to avoid conflicts
+vpc_cidr = "10.13.0.0/16"  # Change for each deployment to avoid conflicts
 az_count = 2
 
 # Database Configuration
@@ -218,10 +223,10 @@ db_name                 = "hackhub"
 db_instance_class       = "db.t3.small"
 db_allocated_storage    = 20
 db_username             = "admin"
-db_password             = "AWSuser#1"  # Change this!
+db_password             = "USE_A_STRONG_PASSWORD_HERE"  # MUST change this!
 
 # Cognito Configuration
-admin_email = "tp078851@mail.apu.edu.my"
+admin_email = "your-email@amazon.com"  # Receives admin verification email
 
 # Cost Optimization
 enable_nat_gateway             = false  # Save $64/month
@@ -232,14 +237,19 @@ enable_ses_endpoint            = true   # ~$7/month
 db_multi_az            = false  # Set true for production
 db_deletion_protection = false  # Set true for production
 db_skip_final_snapshot = false  # Creates snapshot before deletion
+
+# CORS — after first deploy, update with your actual CloudFront URLs
+cors_allowed_origins = ["https://YOUR-ADMIN.cloudfront.net", "https://YOUR-JUDGE.cloudfront.net", "https://YOUR-PARTICIPANT.cloudfront.net"]
 ```
 
 ### Default User Credentials
 
-After deployment, three default users are created:
-- **Admin**: admin@hackhub.com / hackathonsystem@1A
-- **Judge**: judge@hackhub.com / hackathonsystem@1A
-- **Participant**: participant@hackhub.com / hackathonsystem@1A
+After deployment, three default users are created in Cognito:
+- **Admin**: admin@hackhub.com
+- **Judge**: judge@hackhub.com
+- **Participant**: participant@hackhub.com
+
+The default password is set during the Cognito user creation in Terraform. Check `modules/cognito/main.tf` for the temporary password configuration. Users will be prompted to change their password on first login.
 
 ## 📊 Resource Summary
 
