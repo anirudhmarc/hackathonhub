@@ -183,7 +183,7 @@ resource "aws_db_instance" "main" {
 
   # Engine Configuration
   engine             = "mysql"
-  engine_version     = "8.0.39"
+  engine_version     = var.engine_version
   instance_class     = var.instance_class
   ca_cert_identifier = "rds-ca-rsa2048-g1"
 

@@ -5,6 +5,12 @@
 # Required Variables
 # ============================================================================
 
+variable "engine_version" {
+  description = "MySQL engine version (check availability in your target region)"
+  type        = string
+  default     = "8.0.44"
+}
+
 variable "project_name" {
   description = "Project name"
   type        = string
