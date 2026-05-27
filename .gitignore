@@ -9,6 +9,8 @@ terraform.tfstate.backup
 .env
 *.pem
 *.key
+terraform.tfvars
+terraform.tfstate
 
 # OS files
 .DS_Store

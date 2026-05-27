@@ -1,21 +1,20 @@
 # ============================================================================
-# Terraform Variables - Production Configuration
+# Terraform Variables - Configuration Template
 # ============================================================================
-# This file contains the actual values for your production environment.
-# Customize these values based on your requirements.
+# Copy this file to terraform.tfvars and customize the values.
+# IMPORTANT: Never commit terraform.tfvars to git (it contains secrets).
 # ============================================================================
 
 # Project Configuration
 # ============================================================================
-project_name = "hackhub-test-13"
+project_name = "hackhub-YOUR-NAME"
 environment  = "prod"
 aws_region   = "ap-southeast-2"
-owner        = "Platform Team"
+owner        = "Your Team"
 cost_center  = "Engineering"
 
 # VPC Configuration
 # ============================================================================
-# Using 10.2.0.0/16 to match existing production VPC
 vpc_cidr = "10.13.0.0/16"
 az_count = 2
 
@@ -36,20 +35,17 @@ enable_lambda_endpoint         = false # Only if Lambda invokes Lambda
 
 # Security Configuration
 # ============================================================================
-# Bastion host for database access (optional)
 enable_bastion_sg     = false
 bastion_allowed_cidrs = []
-# Example: bastion_allowed_cidrs = ["1.2.3.4/32", "5.6.7.8/32"]
 
 # Monitoring Configuration
 # ============================================================================
 enable_flow_logs         = true
-flow_logs_traffic_type   = "ALL" # Options: ALL, ACCEPT, REJECT
-flow_logs_retention_days = 7     # Options: 1, 3, 5, 7, 14, 30, 60, 90, etc.
+flow_logs_traffic_type   = "ALL"
+flow_logs_retention_days = 7
 
 # Network ACLs Configuration
 # ============================================================================
-# Additional security layer (optional)
 enable_network_acls = false
 
 
@@ -58,7 +54,7 @@ enable_network_acls = false
 # ============================================================================
 db_name              = "hackhub"
 db_username          = "admin"
-db_password          = "AWSuser#1"
+db_password          = "CHANGE_ME_USE_A_STRONG_PASSWORD"
 db_instance_class    = "db.t3.small"
 db_allocated_storage = 20
 
@@ -80,8 +76,7 @@ db_monitoring_interval        = 60 # seconds
 # ============================================================================
 # Cognito Configuration
 # ============================================================================
-# Callback and logout URLs are now automatically configured from CloudFront outputs.
-admin_email = "tp078851@mail.apu.edu.my"
+admin_email = "your-admin-email@example.com"
 
 # Security
 cognito_enable_mfa             = false # Set true for production MFA
@@ -92,17 +87,18 @@ cognito_deletion_protection    = false # Set true for production
 # ============================================================================
 # DynamoDB Configuration
 # ============================================================================
-dynamodb_billing_mode          = "PAY_PER_REQUEST" # On-demand pricing
-dynamodb_enable_sessions_table = false             # Only participants table needed
-dynamodb_enable_pitr           = true              # Point-in-time recovery
-dynamodb_enable_ttl            = true              # Auto cleanup old data
-dynamodb_enable_streams        = false             # Enable if needed for Lambda triggers
+dynamodb_billing_mode          = "PAY_PER_REQUEST"
+dynamodb_enable_sessions_table = false
+dynamodb_enable_pitr           = true
+dynamodb_enable_ttl            = true
+dynamodb_enable_streams        = false
 dynamodb_stream_view_type      = "NEW_AND_OLD_IMAGES"
-dynamodb_enable_alarms         = false # Enable for production monitoring
+dynamodb_enable_alarms         = false
 
 
 # ============================================================================
 # S3 + CloudFront Configuration
 # ============================================================================
-cloudfront_price_class = "PriceClass_100" # North America & Europe only
-cors_allowed_origins   = ["*"]            # Restrict in production
+cloudfront_price_class = "PriceClass_100"
+# IMPORTANT: After deployment, replace these with your actual CloudFront URLs
+cors_allowed_origins   = ["https://YOUR-ADMIN-CLOUDFRONT.cloudfront.net", "https://YOUR-JUDGE-CLOUDFRONT.cloudfront.net", "https://YOUR-PARTICIPANT-CLOUDFRONT.cloudfront.net"]
