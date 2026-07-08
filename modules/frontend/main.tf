@@ -14,7 +14,9 @@ resource "null_resource" "deploy" {
     ]))
     config_hash = sha1(join(",", [
       var.api_gateway_url, var.cognito_user_pool_id, var.cognito_client_id,
-      var.cognito_auth_domain, var.cloudfront_url, var.aws_region
+      var.cognito_auth_domain, var.cloudfront_url, var.aws_region,
+      var.app_name, tostring(var.show_score), tostring(var.enable_scoring_datetime_control),
+      var.scoring_start_date, var.scoring_end_date, var.scoring_lock_date
     ]))
   }
 
@@ -23,7 +25,7 @@ resource "null_resource" "deploy" {
       cd ${var.repo_path}
 
       cat > .env << 'EOF'
-VITE_APP_NAME=Deepgram × Pipecat × AWS Hackathon
+VITE_APP_NAME=${var.app_name}
 VITE_API_URL=${var.api_gateway_url}
 VITE_ADMIN_COGNITO_AUTHORITY=https://cognito-idp.${var.aws_region}.amazonaws.com/${var.cognito_user_pool_id}
 VITE_ADMIN_COGNITO_CLIENT_ID=${var.cognito_client_id}
@@ -35,22 +37,13 @@ VITE_COGNITO_CLIENT_ID=${var.cognito_client_id}
 VITE_COGNITO_DOMAIN=${var.cognito_auth_domain}
 VITE_S3_BUCKET_NAME=${var.s3_bucket_name}
 VITE_AWS_REGION=${var.aws_region}
-VITE_PROBLEMS_START_DATE="2026-06-01T09:00:00+08:00"
-VITE_PROBLEMS_SELECTION_DATE="2026-06-01T09:00:00+08:00"
-VITE_PROBLEMS_SELECTION_END_DATE="2026-06-15T23:59:00+08:00"
-VITE_HACKATHON_START_DATE="2026-06-07T09:00:00+08:00"
-VITE_SUBMISSION_START_DATE="2026-06-08T00:00:00+08:00"
-VITE_SUBMISSION_END_DATE="2026-06-12T23:59:00+08:00"
-VITE_FEEDBACK_RELEASE_DATE="2026-06-15T17:00:00+08:00"
-VITE_FINALISTS_ANNOUNCEMENT_DATE="2026-06-15T17:00:00+08:00"
-VITE_WINNERS_ANNOUNCEMENT_DATE="2026-06-15T17:00:00+08:00"
-VITE_SHOW_SCORE=0
-VITE_FINAL_SUBMISSION_START_DATE="2026-06-08T00:00:00+08:00"
-VITE_FINAL_SUBMISSION_END_DATE="2026-06-12T23:59:00+08:00"
-VITE_ENABLE_SCORING_DATETIME_CONTROL=1
-VITE_SCORING_START_DATE="2026-06-12T00:00:00+08:00"
-VITE_SCORING_END_DATE="2026-06-14T23:59:00+08:00"
-VITE_SCORING_LOCK_DATE="2026-06-15T00:00:00+08:00"
+VITE_SHOW_SCORE=${var.show_score ? 1 : 0}
+# Judge scoring window controls. Participant/problem/submission dates are now
+# per-hackathon data served by the API, so those VITE_*_DATE vars were removed.
+VITE_ENABLE_SCORING_DATETIME_CONTROL=${var.enable_scoring_datetime_control ? 1 : 0}
+VITE_SCORING_START_DATE="${var.scoring_start_date}"
+VITE_SCORING_END_DATE="${var.scoring_end_date}"
+VITE_SCORING_LOCK_DATE="${var.scoring_lock_date}"
 EOF
 
       npm install

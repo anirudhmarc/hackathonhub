@@ -141,6 +141,11 @@ locals {
       ]
       resources = [var.cognito_user_pool_arn]
     }
+    # Allows onboarding handlers to invoke the CognitoUserManager function.
+    "lambda" = {
+      actions   = ["lambda:InvokeFunction"]
+      resources = ["arn:aws:lambda:*:*:function:${var.project_name}-${var.environment}-CognitoUserManager"]
+    }
   }
 }
 
@@ -148,6 +153,25 @@ locals {
 # ============================================================================
 # Lambda Functions (Dynamic Creation from Map)
 # ============================================================================
+
+# ============================================================================
+# Shared tenancy Lambda Layer (multi-tenant helper: tenancy.js + mysql2)
+# Zipped from lambda-code/layers/tenancy/ so its contents land at
+# /opt/nodejs/tenancy.js in every function. Handlers: require('/opt/nodejs/tenancy').
+# ============================================================================
+data "archive_file" "tenancy_layer" {
+  type        = "zip"
+  source_dir  = "${path.root}/${var.lambda_code_path}/layers/tenancy"
+  output_path = "${path.root}/${var.lambda_code_path}/layers/tenancy_layer.zip"
+}
+
+resource "aws_lambda_layer_version" "tenancy" {
+  layer_name          = "${var.project_name}-${var.environment}-tenancy"
+  filename            = data.archive_file.tenancy_layer.output_path
+  source_code_hash    = data.archive_file.tenancy_layer.output_base64sha256
+  compatible_runtimes = ["nodejs22.x"]
+  description         = "Multi-tenant helper (tenancy.js) + mysql2"
+}
 
 resource "aws_lambda_function" "functions" {
   for_each = local.lambda_functions
@@ -158,6 +182,7 @@ resource "aws_lambda_function" "functions" {
   runtime       = each.value.runtime
   timeout       = each.value.timeout
   memory_size   = each.value.memory_size
+  layers        = [aws_lambda_layer_version.tenancy.arn]
 
   filename         = "${path.root}/${var.lambda_code_path}/${each.value.filename}"
   source_code_hash = filebase64sha256("${path.root}/${var.lambda_code_path}/${each.value.filename}")
@@ -234,10 +259,14 @@ resource "aws_api_gateway_authorizer" "cognito" {
 resource "aws_api_gateway_deployment" "main" {
   rest_api_id = aws_api_gateway_rest_api.main.id
 
+  # Routes are built from discrete resources (not an OpenAPI body), so hashing
+  # the route/resource maps is what actually forces a new stage deployment when
+  # routes change. Hashing only `body` (null here) would silently no-op.
   triggers = {
     redeployment = sha1(jsonencode([
-      aws_api_gateway_rest_api.main.body,
       aws_api_gateway_rest_api.main.root_resource_id,
+      local.api_routes,
+      keys(local.resource_map),
     ]))
   }
 

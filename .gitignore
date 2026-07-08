@@ -10,6 +10,8 @@ terraform.tfstate.backup
 *.pem
 *.key
 terraform.tfvars
+*.tfvars
+env/**/*.tfvars
 terraform.tfstate
 
 # OS files
@@ -25,3 +27,4 @@ Thumbs.db
 # Logs
 *.log
 .gstack/
+lambda-code/layers/tenancy_layer.zip

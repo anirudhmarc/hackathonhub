@@ -344,7 +344,6 @@ resource "aws_cloudfront_distribution" "admin_portal" {
 
   viewer_certificate {
     cloudfront_default_certificate = true
-    minimum_protocol_version       = "TLSv1.2_2021"
   }
 
   tags = merge(
@@ -409,7 +408,6 @@ resource "aws_cloudfront_distribution" "judge_portal" {
 
   viewer_certificate {
     cloudfront_default_certificate = true
-    minimum_protocol_version       = "TLSv1.2_2021"
   }
 
   tags = merge(
@@ -474,7 +472,6 @@ resource "aws_cloudfront_distribution" "participant_portal" {
 
   viewer_certificate {
     cloudfront_default_certificate = true
-    minimum_protocol_version       = "TLSv1.2_2021"
   }
 
   tags = merge(

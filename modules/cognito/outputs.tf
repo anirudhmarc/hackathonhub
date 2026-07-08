@@ -47,6 +47,11 @@ output "admins_group_name" {
   value       = aws_cognito_user_group.admins.name
 }
 
+output "hosts_group_name" {
+  description = "Name of the Hosts group"
+  value       = aws_cognito_user_group.hosts.name
+}
+
 output "judges_group_name" {
   description = "Name of the Judges group"
   value       = aws_cognito_user_group.judges.name
@@ -95,6 +100,7 @@ output "cognito_summary" {
     identity_pool_id = aws_cognito_identity_pool.main.id
     groups = [
       aws_cognito_user_group.admins.name,
+      aws_cognito_user_group.hosts.name,
       aws_cognito_user_group.judges.name,
       aws_cognito_user_group.participants.name
     ]

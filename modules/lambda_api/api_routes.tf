@@ -6,12 +6,34 @@
 # ============================================================================
 
 # ============================================================================
+# Hackathon Management Routes - /hackathons (platform CRUD, Host/Admin)
+# ============================================================================
+
+resource "aws_api_gateway_resource" "hackathons" {
+  rest_api_id = aws_api_gateway_rest_api.main.id
+  parent_id   = aws_api_gateway_rest_api.main.root_resource_id
+  path_part   = "hackathons"
+}
+
+resource "aws_api_gateway_resource" "hackathons_id" {
+  rest_api_id = aws_api_gateway_rest_api.main.id
+  parent_id   = aws_api_gateway_resource.hackathons.id
+  path_part   = "{hackathonId}"
+}
+
+resource "aws_api_gateway_resource" "hackathons_logo_url" {
+  rest_api_id = aws_api_gateway_rest_api.main.id
+  parent_id   = aws_api_gateway_resource.hackathons_id.id
+  path_part   = "logo-url"
+}
+
+# ============================================================================
 # Admin Routes - /admin
 # ============================================================================
 
 resource "aws_api_gateway_resource" "admin" {
   rest_api_id = aws_api_gateway_rest_api.main.id
-  parent_id   = aws_api_gateway_rest_api.main.root_resource_id
+  parent_id   = aws_api_gateway_resource.hackathons_id.id
   path_part   = "admin"
 }
 
@@ -111,7 +133,7 @@ resource "aws_api_gateway_resource" "admin_judging_stages" {
 
 resource "aws_api_gateway_resource" "judge" {
   rest_api_id = aws_api_gateway_rest_api.main.id
-  parent_id   = aws_api_gateway_rest_api.main.root_resource_id
+  parent_id   = aws_api_gateway_resource.hackathons_id.id
   path_part   = "judge"
 }
 
@@ -169,7 +191,7 @@ resource "aws_api_gateway_resource" "judge_assignments_teams" {
 
 resource "aws_api_gateway_resource" "participant" {
   rest_api_id = aws_api_gateway_rest_api.main.id
-  parent_id   = aws_api_gateway_rest_api.main.root_resource_id
+  parent_id   = aws_api_gateway_resource.hackathons_id.id
   path_part   = "participant"
 }
 
@@ -213,89 +235,99 @@ resource "aws_api_gateway_resource" "participant_feedback" {
 locals {
   # Map of API routes to Lambda functions
   api_routes = {
+    # Hackathon management (platform CRUD)
+    "POST:/hackathons"                = "CreateHackathon"
+    "GET:/hackathons"                 = "GetHackathons"
+    "GET:/hackathons/{hackathonId}"   = "GetHackathon"
+    "PUT:/hackathons/{hackathonId}"   = "UpdateHackathon"
+    "POST:/hackathons/{hackathonId}/logo-url" = "GetHackathonLogoUploadUrl"
+
     # Admin - Participants
-    "GET:/admin/participants"               = "GetAdminParticipants"
-    "POST:/admin/participants"              = "PostAdminParticipants"
-    "PUT:/admin/participants/{id}"          = "PutAdminParticipants"
-    "DELETE:/admin/participants/{id}"       = "DeleteAdminParticipants"
-    "POST:/admin/participants/{id}/approve" = "ApproveParticipant"
+    "GET:/hackathons/{hackathonId}/admin/participants"               = "GetAdminParticipants"
+    "POST:/hackathons/{hackathonId}/admin/participants"              = "PostAdminParticipants"
+    "PUT:/hackathons/{hackathonId}/admin/participants/{id}"          = "PutAdminParticipants"
+    "DELETE:/hackathons/{hackathonId}/admin/participants/{id}"       = "DeleteAdminParticipants"
+    "POST:/hackathons/{hackathonId}/admin/participants/{id}/approve" = "ApproveParticipant"
 
     # Admin - Teams
-    "GET:/admin/teams"             = "GetAdminTeams"
-    "POST:/admin/teams"            = "PostAdminTeams"
-    "PUT:/admin/teams/{teamId}"    = "PutAdminTeams"
-    "DELETE:/admin/teams/{teamId}" = "DeleteAdminTeams"
+    "GET:/hackathons/{hackathonId}/admin/teams"             = "GetAdminTeams"
+    "POST:/hackathons/{hackathonId}/admin/teams"            = "PostAdminTeams"
+    "PUT:/hackathons/{hackathonId}/admin/teams/{teamId}"    = "PutAdminTeams"
+    "DELETE:/hackathons/{hackathonId}/admin/teams/{teamId}" = "DeleteAdminTeams"
 
     # Admin - Problems
-    "GET:/admin/problems"                = "GetAdminProblems"
-    "POST:/admin/problems"               = "PostAdminProblems"
-    "PUT:/admin/problems/{problemId}"    = "PutAdminProblems"
-    "DELETE:/admin/problems/{problemId}" = "DeleteAdminProblems"
+    "GET:/hackathons/{hackathonId}/admin/problems"                = "GetAdminProblems"
+    "POST:/hackathons/{hackathonId}/admin/problems"               = "PostAdminProblems"
+    "PUT:/hackathons/{hackathonId}/admin/problems/{problemId}"    = "PutAdminProblems"
+    "DELETE:/hackathons/{hackathonId}/admin/problems/{problemId}" = "DeleteAdminProblems"
 
     # Admin - Judges
-    "GET:/admin/judges"              = "GetAdminJudges"
-    "POST:/admin/judges"             = "PostAdminJudges"
-    "PUT:/admin/judges/{judgeId}"    = "PutAdminJudges"
-    "DELETE:/admin/judges/{judgeId}" = "DeleteAdminJudges"
+    "GET:/hackathons/{hackathonId}/admin/judges"              = "GetAdminJudges"
+    "POST:/hackathons/{hackathonId}/admin/judges"             = "PostAdminJudges"
+    "PUT:/hackathons/{hackathonId}/admin/judges/{judgeId}"    = "PutAdminJudges"
+    "DELETE:/hackathons/{hackathonId}/admin/judges/{judgeId}" = "DeleteAdminJudges"
 
     # Admin - Assignments
-    "GET:/admin/assignments"                   = "GetAdminAssignments"
-    "POST:/admin/assignments"                  = "PostAdminAssignments"
-    "DELETE:/admin/assignments/{assignmentId}" = "DeleteAdminAssignments"
+    "GET:/hackathons/{hackathonId}/admin/assignments"                   = "GetAdminAssignments"
+    "POST:/hackathons/{hackathonId}/admin/assignments"                  = "PostAdminAssignments"
+    "DELETE:/hackathons/{hackathonId}/admin/assignments/{assignmentId}" = "DeleteAdminAssignments"
 
     # Admin - Other
-    "GET:/admin/leaderboard"      = "AdminGetLeaderboardData"
-    "POST:/admin/broadcast-email" = "BroadcastEmailLambda"
-    "GET:/admin/judging-stages"   = "GetJudgieStages"
+    "GET:/hackathons/{hackathonId}/admin/leaderboard"      = "AdminGetLeaderboardData"
+    "POST:/hackathons/{hackathonId}/admin/broadcast-email" = "BroadcastEmailLambda"
+    "GET:/hackathons/{hackathonId}/admin/judging-stages"   = "GetJudgieStages"
 
     # Judge
-    "GET:/judge/teams"                       = "GetJudgeTeams"
-    "GET:/judge/judges"                      = "GetJudgeJudges"
-    "GET:/judge/problems"                    = "GetJudgeProblems"
-    "GET:/judge/scores"                      = "GetJudgeScores"
-    "POST:/judge/scores"                     = "PostJudgeScores"
-    "GET:/judge/stages"                      = "GetJudgieStages"
-    "GET:/judge/assignments/{judgeId}/teams" = "GetAssignedTeams"
+    "GET:/hackathons/{hackathonId}/judge/teams"                       = "GetJudgeTeams"
+    "GET:/hackathons/{hackathonId}/judge/judges"                      = "GetJudgeJudges"
+    "GET:/hackathons/{hackathonId}/judge/problems"                    = "GetJudgeProblems"
+    "GET:/hackathons/{hackathonId}/judge/scores"                      = "GetJudgeScores"
+    "POST:/hackathons/{hackathonId}/judge/scores"                     = "PostJudgeScores"
+    "GET:/hackathons/{hackathonId}/judge/stages"                      = "GetJudgieStages"
+    "GET:/hackathons/{hackathonId}/judge/assignments/{judgeId}/teams" = "GetAssignedTeams"
 
     # Participant
-    "GET:/participant/teams"            = "GetStudentTeam"
-    "POST:/participant/teams"           = "PostStudentTeam"
-    "GET:/participant/problems"         = "GetStudentProblem"
-    "POST:/participant/problems"        = "PostStudentProblem"
-    "PUT:/participant/problems"         = "PostStudentProblem"
-    "GET:/participant/submissions"      = "GetStudentSubmission"
-    "PUT:/participant/submissions"      = "UpdateSubmissionDetails"
-    "POST:/participant/submission-urls" = "GetSubmissionPresignedUrls"
-    "GET:/participant/feedback"         = "GetStudentScore"
+    "GET:/hackathons/{hackathonId}/participant/teams"            = "GetParticipantTeam"
+    "POST:/hackathons/{hackathonId}/participant/teams"           = "PostParticipantTeam"
+    "GET:/hackathons/{hackathonId}/participant/problems"         = "GetParticipantProblem"
+    "POST:/hackathons/{hackathonId}/participant/problems"        = "PostParticipantProblem"
+    "PUT:/hackathons/{hackathonId}/participant/problems"         = "PostParticipantProblem"
+    "GET:/hackathons/{hackathonId}/participant/submissions"      = "GetParticipantSubmission"
+    "PUT:/hackathons/{hackathonId}/participant/submissions"      = "UpdateSubmissionDetails"
+    "POST:/hackathons/{hackathonId}/participant/submission-urls" = "GetSubmissionPresignedUrls"
+    "GET:/hackathons/{hackathonId}/participant/feedback"         = "GetParticipantScore"
   }
 
   # Extract unique resource paths for method creation
   resource_map = {
-    "/admin/participants"                = aws_api_gateway_resource.admin_participants.id
-    "/admin/participants/{id}"           = aws_api_gateway_resource.admin_participants_id.id
-    "/admin/participants/{id}/approve"   = aws_api_gateway_resource.admin_participants_approve.id
-    "/admin/teams"                       = aws_api_gateway_resource.admin_teams.id
-    "/admin/teams/{teamId}"              = aws_api_gateway_resource.admin_teams_id.id
-    "/admin/problems"                    = aws_api_gateway_resource.admin_problems.id
-    "/admin/problems/{problemId}"        = aws_api_gateway_resource.admin_problems_id.id
-    "/admin/judges"                      = aws_api_gateway_resource.admin_judges.id
-    "/admin/judges/{judgeId}"            = aws_api_gateway_resource.admin_judges_id.id
-    "/admin/assignments"                 = aws_api_gateway_resource.admin_assignments.id
-    "/admin/assignments/{assignmentId}"  = aws_api_gateway_resource.admin_assignments_id.id
-    "/admin/leaderboard"                 = aws_api_gateway_resource.admin_leaderboard.id
-    "/admin/broadcast-email"             = aws_api_gateway_resource.admin_broadcast_email.id
-    "/admin/judging-stages"              = aws_api_gateway_resource.admin_judging_stages.id
-    "/judge/teams"                       = aws_api_gateway_resource.judge_teams.id
-    "/judge/judges"                      = aws_api_gateway_resource.judge_judges.id
-    "/judge/problems"                    = aws_api_gateway_resource.judge_problems.id
-    "/judge/scores"                      = aws_api_gateway_resource.judge_scores.id
-    "/judge/stages"                      = aws_api_gateway_resource.judge_stages.id
-    "/judge/assignments/{judgeId}/teams" = aws_api_gateway_resource.judge_assignments_teams.id
-    "/participant/teams"                 = aws_api_gateway_resource.participant_teams.id
-    "/participant/problems"              = aws_api_gateway_resource.participant_problems.id
-    "/participant/submissions"           = aws_api_gateway_resource.participant_submissions.id
-    "/participant/submission-urls"       = aws_api_gateway_resource.participant_submission_urls.id
-    "/participant/feedback"              = aws_api_gateway_resource.participant_feedback.id
+    "/hackathons"                        = aws_api_gateway_resource.hackathons.id
+    "/hackathons/{hackathonId}"          = aws_api_gateway_resource.hackathons_id.id
+    "/hackathons/{hackathonId}/logo-url" = aws_api_gateway_resource.hackathons_logo_url.id
+    "/hackathons/{hackathonId}/admin/participants"                = aws_api_gateway_resource.admin_participants.id
+    "/hackathons/{hackathonId}/admin/participants/{id}"           = aws_api_gateway_resource.admin_participants_id.id
+    "/hackathons/{hackathonId}/admin/participants/{id}/approve"   = aws_api_gateway_resource.admin_participants_approve.id
+    "/hackathons/{hackathonId}/admin/teams"                       = aws_api_gateway_resource.admin_teams.id
+    "/hackathons/{hackathonId}/admin/teams/{teamId}"              = aws_api_gateway_resource.admin_teams_id.id
+    "/hackathons/{hackathonId}/admin/problems"                    = aws_api_gateway_resource.admin_problems.id
+    "/hackathons/{hackathonId}/admin/problems/{problemId}"        = aws_api_gateway_resource.admin_problems_id.id
+    "/hackathons/{hackathonId}/admin/judges"                      = aws_api_gateway_resource.admin_judges.id
+    "/hackathons/{hackathonId}/admin/judges/{judgeId}"            = aws_api_gateway_resource.admin_judges_id.id
+    "/hackathons/{hackathonId}/admin/assignments"                 = aws_api_gateway_resource.admin_assignments.id
+    "/hackathons/{hackathonId}/admin/assignments/{assignmentId}"  = aws_api_gateway_resource.admin_assignments_id.id
+    "/hackathons/{hackathonId}/admin/leaderboard"                 = aws_api_gateway_resource.admin_leaderboard.id
+    "/hackathons/{hackathonId}/admin/broadcast-email"             = aws_api_gateway_resource.admin_broadcast_email.id
+    "/hackathons/{hackathonId}/admin/judging-stages"              = aws_api_gateway_resource.admin_judging_stages.id
+    "/hackathons/{hackathonId}/judge/teams"                       = aws_api_gateway_resource.judge_teams.id
+    "/hackathons/{hackathonId}/judge/judges"                      = aws_api_gateway_resource.judge_judges.id
+    "/hackathons/{hackathonId}/judge/problems"                    = aws_api_gateway_resource.judge_problems.id
+    "/hackathons/{hackathonId}/judge/scores"                      = aws_api_gateway_resource.judge_scores.id
+    "/hackathons/{hackathonId}/judge/stages"                      = aws_api_gateway_resource.judge_stages.id
+    "/hackathons/{hackathonId}/judge/assignments/{judgeId}/teams" = aws_api_gateway_resource.judge_assignments_teams.id
+    "/hackathons/{hackathonId}/participant/teams"                 = aws_api_gateway_resource.participant_teams.id
+    "/hackathons/{hackathonId}/participant/problems"              = aws_api_gateway_resource.participant_problems.id
+    "/hackathons/{hackathonId}/participant/submissions"           = aws_api_gateway_resource.participant_submissions.id
+    "/hackathons/{hackathonId}/participant/submission-urls"       = aws_api_gateway_resource.participant_submission_urls.id
+    "/hackathons/{hackathonId}/participant/feedback"              = aws_api_gateway_resource.participant_feedback.id
   }
 }
 

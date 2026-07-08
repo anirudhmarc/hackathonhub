@@ -15,7 +15,8 @@ locals {
     ManagedBy   = "Terraform"
     Owner       = var.owner
     CostCenter  = var.cost_center
-    CreatedAt   = timestamp()
+    # NOTE: do not use timestamp() here — it changes on every apply, which
+    # re-tags every resource and forces ~1h CloudFront distribution updates.
   }
 
   name_prefix = "${var.project_name}-${var.environment}"
@@ -62,13 +63,13 @@ module "vpc" {
 module "rds" {
   source = "./modules/rds"
 
-  project_name          = var.project_name
-  environment           = var.environment
-  vpc_id                = module.vpc.vpc_id
-  database_subnet_ids   = module.vpc.database_subnet_ids
-  db_subnet_group_name  = module.vpc.db_subnet_group_name
-  lambda_sg_id          = module.vpc.lambda_security_group_id
-  common_tags           = local.common_tags
+  project_name         = var.project_name
+  environment          = var.environment
+  vpc_id               = module.vpc.vpc_id
+  database_subnet_ids  = module.vpc.database_subnet_ids
+  db_subnet_group_name = module.vpc.db_subnet_group_name
+  lambda_sg_id         = module.vpc.lambda_security_group_id
+  common_tags          = local.common_tags
 
   # Database Configuration
   db_name           = var.db_name

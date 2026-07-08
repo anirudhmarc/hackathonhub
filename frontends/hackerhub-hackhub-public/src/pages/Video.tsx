@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCurrentHackathon } from "@/contexts/CurrentHackathonContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,16 +15,17 @@ import axios from 'axios';
 import { UploadedFile } from '@/types/files';
 import { getMimeTypeFromExtension, getFileTypeInfo, formatFileSize, constructS3PublicUrl, validateRepositoryUrl, isPlaceholderVideo } from '@/utils/videoUtils';
 import { useSubmissionTimer } from '@/hooks/useSubmissionTimer';
+import { buildUrl, authHeaders } from '@/lib/apiClient';
 
-const API_GATEWAY_BASE_URL = import.meta.env.VITE_API_URL;
 const S3_BUCKET_NAME = import.meta.env.VITE_S3_BUCKET_NAME;
 const REGION = import.meta.env.VITE_AWS_REGION;
 
-const SUBMISSION_START_DATE = new Date(import.meta.env.VITE_SUBMISSION_START_DATE);
-const SUBMISSION_END_DATE = new Date(import.meta.env.VITE_SUBMISSION_END_DATE);
+// Sentinel used while the current hackathon (and thus its submission window) is
+// still loading or unconfigured, keeping the submission window closed.
+const FAR_FUTURE = new Date(8640000000000000);
 
-const FINAL_SUBMISSION_START_DATE = new Date(import.meta.env.VITE_FINAL_SUBMISSION_START_DATE || import.meta.env.VITE_SUBMISSION_START_DATE);
-const FINAL_SUBMISSION_END_DATE = new Date(import.meta.env.VITE_FINAL_SUBMISSION_END_DATE || import.meta.env.VITE_SUBMISSION_END_DATE);
+const parseTimeline = (value: string | null | undefined): Date =>
+  value ? new Date(value) : FAR_FUTURE;
 
 // getMimeTypeFromExtension, getFileTypeInfo moved to @/utils/videoUtils
 
@@ -45,10 +47,23 @@ interface PresignedUrlData {
 
 const VideoSubmissionPage: React.FC = () => {
   const { user, idToken, updateUserTeam, isLoading } = useAuth();
+  const { currentHackathon, currentHackathonId } = useCurrentHackathon();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const isFinalist = false;
+
+  // Submission windows are sourced from the current hackathon's timeline.
+  // The final round falls back to the preliminary window when its own dates
+  // are unconfigured, matching the previous env-var fallback behaviour.
+  const SUBMISSION_START_DATE = parseTimeline(currentHackathon?.submission_start);
+  const SUBMISSION_END_DATE = parseTimeline(currentHackathon?.submission_end);
+  const FINAL_SUBMISSION_START_DATE = parseTimeline(
+    currentHackathon?.final_submission_start || currentHackathon?.submission_start
+  );
+  const FINAL_SUBMISSION_END_DATE = parseTimeline(
+    currentHackathon?.final_submission_end || currentHackathon?.submission_end
+  );
 
   const getSubmissionDates = () => {
     if (isFinalist) {
@@ -175,15 +190,15 @@ const VideoSubmissionPage: React.FC = () => {
     updateSubmissionStatus();
     const timer = setInterval(updateSubmissionStatus, 1000);
     return () => clearInterval(timer);
-  }, [currentStartDate, currentEndDate, roundType]);
+  }, [currentStartDate.getTime(), currentEndDate.getTime(), roundType]);
 
   const fetchSubmissionData = async () => {
-    if (!idToken || !user?.teamId) return;
-    
+    if (!idToken || !user?.teamId || !currentHackathonId) return;
+
     try {
       const response = await axios.get(
-        `${API_GATEWAY_BASE_URL}/participant/submissions`,
-        { headers: { 'Authorization': `Bearer ${idToken}` } }
+        buildUrl(currentHackathonId, "submissions"),
+        { headers: authHeaders(idToken) }
       );
       
       if (response.data?.submission) {
@@ -438,8 +453,13 @@ const VideoSubmissionPage: React.FC = () => {
       toast({ title: "Requirements Not Met", description: "Please register a team on the dashboard first.", variant: "destructive" });
       return;
     }
-    
-    
+
+    if (!currentHackathonId) {
+      toast({ title: "No Hackathon Selected", description: "Please select a hackathon before submitting.", variant: "destructive" });
+      return;
+    }
+
+
     if (!submissionPeriodOpen) {
       toast({ 
         title: "Submission Period Closed", 
@@ -523,9 +543,9 @@ const VideoSubmissionPage: React.FC = () => {
 
         if (filesToGetUrlsFor.length > 0) {
             const getUrlsResponse = await axios.post(
-                `${API_GATEWAY_BASE_URL}/participant/submission-urls`,
+                buildUrl(currentHackathonId, "submission-urls"),
                 { teamId: user.teamId, files: filesToGetUrlsFor },
-                { headers: { 'Authorization': `Bearer ${idToken}`, 'Content-Type': 'application/json' } }
+                { headers: { ...authHeaders(idToken), 'Content-Type': 'application/json' } }
             );
             const { urls } = getUrlsResponse.data;
             videoPresignedData = urls.find((u) => u.category === 'video');
@@ -589,16 +609,16 @@ const VideoSubmissionPage: React.FC = () => {
     console.log("Submission payload:", submissionPayload);
 
     const confirmResponse = await axios.put(
-      `${API_GATEWAY_BASE_URL}/participant/submissions`,
+      buildUrl(currentHackathonId, "submissions"),
       submissionPayload,
-      { headers: { 'Authorization': `Bearer ${idToken}`, 'Content-Type': 'application/json' } }
+      { headers: { ...authHeaders(idToken), 'Content-Type': 'application/json' } }
     );
 
     let submissionId = user.submissionId;
     try {
       const getSubmissionResponse = await axios.get(
-        `${API_GATEWAY_BASE_URL}/participant/submissions`,
-        { headers: { 'Authorization': `Bearer ${idToken}` } }
+        buildUrl(currentHackathonId, "submissions"),
+        { headers: authHeaders(idToken) }
       );
       if (getSubmissionResponse.data?.submission?.submission_id) {
         submissionId = getSubmissionResponse.data.submission.submission_id;
@@ -1409,7 +1429,7 @@ const VideoSubmissionPage: React.FC = () => {
                     id="description"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    placeholder={"Problem Statement: [Describe the customer pain point you worked backwards from]\n\nProject Description: [Describe your voice AI solution, the AWS / Deepgram / Pipecat services used, and any other relevant details...]"}
+                    placeholder={"Problem Statement: [Describe the customer pain point you worked backwards from]\n\nProject Description: [Describe your voice AI solution, the AWS services used, and any other relevant details...]"}
                     rows={8}
                     className="transition-all duration-200 focus:scale-[1.01] focus:shadow-md hover:shadow-sm"
                     required

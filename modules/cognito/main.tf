@@ -134,8 +134,18 @@ resource "random_string" "domain_suffix" {
   upper   = false
 }
 
+# Cognito hosted-UI domain prefixes may not contain reserved words (e.g. "aws"
+# or "cognito"). Strip those tokens out of the project-derived prefix.
+locals {
+  domain_prefix = replace(
+    replace(
+      replace("${var.project_name}-${var.environment}", "-aws", ""),
+    "aws-", ""),
+  "aws", "")
+}
+
 resource "aws_cognito_user_pool_domain" "main" {
-  domain       = "${var.project_name}-${var.environment}-${random_string.domain_suffix.result}"
+  domain       = "${local.domain_prefix}-${random_string.domain_suffix.result}"
   user_pool_id = aws_cognito_user_pool.main.id
 }
 
@@ -200,22 +210,29 @@ resource "aws_cognito_user_pool_client" "main" {
 resource "aws_cognito_user_group" "admins" {
   name         = "Admins"
   user_pool_id = aws_cognito_user_pool.main.id
-  description  = "Administrator users with full system access"
+  description  = "Platform administrators with full cross-hackathon access"
   precedence   = 1
+}
+
+resource "aws_cognito_user_group" "hosts" {
+  name         = "Hosts"
+  user_pool_id = aws_cognito_user_pool.main.id
+  description  = "Hackathon organizers; manage only the hackathons they own"
+  precedence   = 2
 }
 
 resource "aws_cognito_user_group" "judges" {
   name         = "Judges"
   user_pool_id = aws_cognito_user_pool.main.id
   description  = "Judge users with scoring and evaluation access"
-  precedence   = 2
+  precedence   = 3
 }
 
 resource "aws_cognito_user_group" "participants" {
   name         = "Participants"
   user_pool_id = aws_cognito_user_pool.main.id
   description  = "Participant users with submission access"
-  precedence   = 3
+  precedence   = 4
 }
 
 # ============================================================================
@@ -223,13 +240,13 @@ resource "aws_cognito_user_group" "participants" {
 # ============================================================================
 
 resource "aws_cognito_user" "default_users" {
-  count = var.create_default_users ? 3 : 0
+  count = var.create_default_users ? 4 : 0
 
   user_pool_id = aws_cognito_user_pool.main.id
-  username     = element(["admin@hackhub.com", "judge@hackhub.com", "participant@hackhub.com"], count.index)
-  
+  username     = element(["admin@hackhub.com", "host@hackhub.com", "judge@hackhub.com", "participant@hackhub.com"], count.index)
+
   attributes = {
-    email          = element(["admin@hackhub.com", "judge@hackhub.com", "participant@hackhub.com"], count.index)
+    email          = element(["admin@hackhub.com", "host@hackhub.com", "judge@hackhub.com", "participant@hackhub.com"], count.index)
     email_verified = true
   }
 
@@ -237,10 +254,10 @@ resource "aws_cognito_user" "default_users" {
 }
 
 resource "aws_cognito_user_in_group" "default_users_in_group" {
-  count = var.create_default_users ? 3 : 0
+  count = var.create_default_users ? 4 : 0
 
   user_pool_id = aws_cognito_user_pool.main.id
-  group_name   = element([aws_cognito_user_group.admins.name, aws_cognito_user_group.judges.name, aws_cognito_user_group.participants.name], count.index)
+  group_name   = element([aws_cognito_user_group.admins.name, aws_cognito_user_group.hosts.name, aws_cognito_user_group.judges.name, aws_cognito_user_group.participants.name], count.index)
   username     = aws_cognito_user.default_users[count.index].username
 }
 

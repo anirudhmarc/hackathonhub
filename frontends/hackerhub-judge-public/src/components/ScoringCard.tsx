@@ -199,7 +199,6 @@ export const ScoringCard = memo(({
   const [feedback, setFeedback] = useState('');
   const [strength, setStrength] = useState('');
   const [improvement, setImprovement] = useState('');
-  const [awsFundingVote, setAwsFundingVote] = useState<'upvote' | 'downvote' | null>(null);
   const [awsSpecialAward, setAwsSpecialAward] = useState<boolean | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -239,7 +238,6 @@ export const ScoringCard = memo(({
       const technicalKey = getAutoSaveKey('technical_complexity');
       const impactKey = getAutoSaveKey('impact');
       const presentationKey = getAutoSaveKey('presentation');
-      const awsVoteKey = getAutoSaveKey('aws_funding_vote');
       const awsSpecialAwardKey = getAutoSaveKey('aws_special_award');
 
       if (feedbackKey) {
@@ -269,10 +267,6 @@ export const ScoringCard = memo(({
       if (presentationKey) {
         const saved = localStorage.getItem(presentationKey);
         if (saved && !isNaN(Number(saved))) setPresentation(Number(saved));
-      }
-      if (awsVoteKey) {
-        const saved = localStorage.getItem(awsVoteKey);
-        if (saved === 'upvote' || saved === 'downvote') setAwsFundingVote(saved as 'upvote' | 'downvote');
       }
       if (awsSpecialAwardKey) {
         const saved = localStorage.getItem(awsSpecialAwardKey);
@@ -306,7 +300,6 @@ export const ScoringCard = memo(({
           setAwsSpecialAward(null);
         }
         setFeedback(previousScore.feedback || '');
-        setAwsFundingVote(previousScore.aws_funding_vote || null);
         setImprovement(previousScore.improvement || '');
       } else {
         setInnovation(1);
@@ -314,7 +307,6 @@ export const ScoringCard = memo(({
         setImpact(1);
         setPresentation(1);
         setFeedback('');
-        setAwsFundingVote(null);
         setAwsSpecialAward(null);
         setStrength('');
         setImprovement('');
@@ -431,20 +423,6 @@ export const ScoringCard = memo(({
 
   useEffect(() => {
     if (!isOpen || !selectedJudge || !currentStage) return;
-    const key = getAutoSaveKey('aws_funding_vote');
-    if (key) {
-      setAutosaveStatus(prev => ({ ...prev, aws_funding_vote: { ...(prev.aws_funding_vote || { saving: false, lastSaved: null }), saving: true, lastSaved: prev.aws_funding_vote?.lastSaved || null } }));
-      const t = setTimeout(() => {
-        if (awsFundingVote === null) localStorage.removeItem(key);
-        else localStorage.setItem(key, awsFundingVote);
-        setAutosaveStatus(prev => ({ ...prev, aws_funding_vote: { saving: false, lastSaved: new Date() } }));
-      }, 400);
-      return () => { clearTimeout(t); setAutosaveStatus(prev => ({ ...prev, aws_funding_vote: { ...(prev.aws_funding_vote || { saving: false, lastSaved: null }), saving: false } })); };
-    }
-  }, [awsFundingVote, isOpen, selectedJudge, currentStage, getAutoSaveKey]);
-
-  useEffect(() => {
-    if (!isOpen || !selectedJudge || !currentStage) return;
     const key = getAutoSaveKey('aws_special_award');
     if (key) {
       setAutosaveStatus(prev => ({ ...prev, aws_special_award: { ...(prev.aws_special_award || { saving: false, lastSaved: null }), saving: true, lastSaved: prev.aws_special_award?.lastSaved || null } }));
@@ -467,7 +445,6 @@ export const ScoringCard = memo(({
     const technicalKey = getAutoSaveKey('technical_complexity');
     const impactKey = getAutoSaveKey('impact');
     const presentationKey = getAutoSaveKey('presentation');
-    const awsVoteKey = getAutoSaveKey('aws_funding_vote');
     const awsSpecialAwardKey = getAutoSaveKey('aws_special_award');
 
     if (feedbackKey) localStorage.removeItem(feedbackKey);
@@ -477,7 +454,6 @@ export const ScoringCard = memo(({
     if (technicalKey) localStorage.removeItem(technicalKey);
     if (impactKey) localStorage.removeItem(impactKey);
     if (presentationKey) localStorage.removeItem(presentationKey);
-    if (awsVoteKey) localStorage.removeItem(awsVoteKey);
     if (awsSpecialAwardKey) localStorage.removeItem(awsSpecialAwardKey);
     setAutosaveStatus({});
   }, [selectedJudge, currentStage, getAutoSaveKey]);
@@ -546,7 +522,6 @@ export const ScoringCard = memo(({
         feedback,
         finalStrength,
         improvement,
-        awsFundingVote,
         hasBeenEvaluated,
         currentStage.stage_id
       );
@@ -566,7 +541,6 @@ export const ScoringCard = memo(({
           feedback: feedback,
           strength: isFinalRound ? finalStrength : strength,
           improvement: improvement,
-          aws_funding_vote: awsFundingVote,
           timestamp: new Date().toISOString(),
           stage_id: currentStage.stage_id,
         },
@@ -595,7 +569,7 @@ export const ScoringCard = memo(({
     }
   }, [
     selectedJudge, currentStage, team.id, innovation, technicalComplexity, 
-    impact, presentation, feedback, strength, improvement, awsFundingVote, 
+    impact, presentation, feedback, strength, improvement,
     awsSpecialAward, hasBeenEvaluated, isFinalRound, toast, dispatch, refreshData, clearAutoSaveData
   ]);
 

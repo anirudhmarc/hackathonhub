@@ -14,12 +14,18 @@ terraform {
       source  = "hashicorp/random"
       version = "~> 3.5"
     }
+    archive = {
+      source  = "hashicorp/archive"
+      version = "~> 2.4"
+    }
+    null = {
+      source  = "hashicorp/null"
+      version = "~> 3.2"
+    }
   }
 
-  # Backend configuration for remote state
-  # Uncomment and configure after creating S3 bucket and DynamoDB table
-  # backend "s3" {
-  #   # Configuration loaded from backend.config file
-  #   # Run: terraform init -backend-config=env/prod/backend.config
-  # }
+  # Backend configuration for remote state.
+  # Values are loaded from env/prod/backend.config:
+  #   terraform init -backend-config=env/prod/backend.config
+  backend "s3" {}
 }

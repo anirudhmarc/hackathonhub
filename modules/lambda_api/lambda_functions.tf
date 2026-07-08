@@ -8,6 +8,7 @@ locals {
   # Common environment variables for all Lambda functions
   common_lambda_env = {
     ENVIRONMENT          = var.environment
+    PROJECT_NAME         = var.project_name
     REGION               = data.aws_region.current.name
     DB_HOST              = var.db_host
     DB_PORT              = var.db_port
@@ -17,10 +18,75 @@ locals {
     S3_BUCKET_NAME       = var.submissions_bucket_name
     COGNITO_USER_POOL_ID = var.cognito_user_pool_id
     ALLOWED_ORIGIN       = var.allowed_origin
+    # Name of the CognitoUserManager function (invoked by judge/participant onboarding).
+    COGNITO_MANAGER_FUNCTION = "${var.project_name}-${var.environment}-CognitoUserManager"
   }
 
   # Lambda functions configuration map
   lambda_functions = {
+    # ========================================================================
+    # Hackathon Management (Host/Admin) — multi-tenant platform service
+    # ========================================================================
+    CreateHackathon = {
+      group            = "host"
+      permissions      = ["secretsmanager"]
+      handler          = "index.handler"
+      runtime          = "nodejs22.x"
+      timeout          = 30
+      memory_size      = 256
+      filename         = "CreateHackathon_code.zip"
+      vpc_enabled      = true
+      environment_vars = {}
+    }
+
+    GetHackathons = {
+      group            = "host"
+      permissions      = ["secretsmanager", "s3"]
+      handler          = "index.handler"
+      runtime          = "nodejs22.x"
+      timeout          = 30
+      memory_size      = 256
+      filename         = "GetHackathons_code.zip"
+      vpc_enabled      = true
+      environment_vars = {}
+    }
+
+    GetHackathon = {
+      group            = "host"
+      permissions      = ["secretsmanager", "s3"]
+      handler          = "index.handler"
+      runtime          = "nodejs22.x"
+      timeout          = 30
+      memory_size      = 256
+      filename         = "GetHackathon_code.zip"
+      vpc_enabled      = true
+      environment_vars = {}
+    }
+
+    UpdateHackathon = {
+      group            = "host"
+      permissions      = ["secretsmanager"]
+      handler          = "index.handler"
+      runtime          = "nodejs22.x"
+      timeout          = 30
+      memory_size      = 256
+      filename         = "UpdateHackathon_code.zip"
+      vpc_enabled      = true
+      environment_vars = {}
+    }
+
+    GetHackathonLogoUploadUrl = {
+      group            = "host"
+      permissions      = ["secretsmanager", "s3"]
+      handler          = "index.handler"
+      runtime          = "nodejs22.x"
+      timeout          = 30
+      memory_size      = 256
+      filename         = "GetHackathonLogoUploadUrl_code.zip"
+      vpc_enabled      = true
+      environment_vars = {}
+    }
+
     # ========================================================================
     # Admin API Functions - Participants Management
     # ========================================================================
@@ -191,7 +257,7 @@ locals {
 
     PostAdminJudges = {
       group            = "admin"
-      permissions      = ["cognito-idp"]
+      permissions      = ["cognito-idp", "lambda", "secretsmanager"]
       handler          = "index.handler"
       runtime          = "nodejs22.x"
       timeout          = 30
@@ -279,89 +345,89 @@ locals {
       environment_vars = {}
     }
 
-    ExportApprovedStudentsToCSV = {
+    ExportApprovedParticipantsToCSV = {
       group            = "admin"
       permissions      = ["dynamodb", "s3"]
       handler          = "index.handler"
       runtime          = "nodejs22.x"
       timeout          = 60
       memory_size      = 256
-      filename         = "ExportApprovedStudentsToCSV_code.zip"
+      filename         = "ExportApprovedParticipantsToCSV_code.zip"
       vpc_enabled      = false
       environment_vars = {}
     }
 
     # ========================================================================
-    # Student/Participant API Functions
+    # Participant API Functions
     # ========================================================================
-    GetStudentTeam = {
+    GetParticipantTeam = {
       group            = "participant"
-      permissions      = ["dynamodb", "secretsmanager"]
+      permissions      = ["dynamodb", "s3", "secretsmanager"]
       handler          = "index.handler"
       runtime          = "nodejs22.x"
       timeout          = 870
       memory_size      = 3008
-      filename         = "GetStudentTeam_code.zip"
+      filename         = "GetParticipantTeam_code.zip"
       vpc_enabled      = true
       environment_vars = {}
     }
 
-    PostStudentTeam = {
+    PostParticipantTeam = {
       group            = "participant"
       permissions      = ["dynamodb", "secretsmanager"]
       handler          = "index.handler"
       runtime          = "nodejs22.x"
       timeout          = 30
       memory_size      = 128
-      filename         = "PostStudentTeam_code.zip"
+      filename         = "PostParticipantTeam_code.zip"
       vpc_enabled      = true
       environment_vars = {}
     }
 
-    GetStudentProblem = {
+    GetParticipantProblem = {
       group            = "participant"
       permissions      = ["dynamodb", "secretsmanager"]
       handler          = "index.handler"
       runtime          = "nodejs22.x"
       timeout          = 30
       memory_size      = 128
-      filename         = "GetStudentProblem_code.zip"
+      filename         = "GetParticipantProblem_code.zip"
       vpc_enabled      = true
       environment_vars = {}
     }
 
-    PostStudentProblem = {
+    PostParticipantProblem = {
       group            = "participant"
       permissions      = ["dynamodb", "s3", "secretsmanager"]
       handler          = "index.handler"
       runtime          = "nodejs22.x"
       timeout          = 30
       memory_size      = 128
-      filename         = "PostStudentProblem_code.zip"
+      filename         = "PostParticipantProblem_code.zip"
       vpc_enabled      = true
       environment_vars = {}
     }
 
-    GetStudentSubmission = {
+    GetParticipantSubmission = {
       group            = "participant"
       permissions      = ["dynamodb", "s3", "secretsmanager"]
       handler          = "index.handler"
       runtime          = "nodejs22.x"
       timeout          = 30
       memory_size      = 128
-      filename         = "GetStudentSubmission_code.zip"
+      filename         = "GetParticipantSubmission_code.zip"
       vpc_enabled      = true
       environment_vars = {}
     }
 
-    GetStudentScore = {
+    GetParticipantScore = {
       group            = "participant"
       permissions      = ["dynamodb", "secretsmanager"]
       handler          = "index.handler"
       runtime          = "nodejs22.x"
       timeout          = 30
       memory_size      = 128
-      filename         = "GetStudentScore_code.zip"
+      filename         = "GetParticipantScore_code.zip"
       vpc_enabled      = true
       environment_vars = {}
     }
@@ -374,7 +440,8 @@ locals {
       timeout          = 30
       memory_size      = 128
       filename         = "GetSubmissionPresignedUrls_code.zip"
-      vpc_enabled      = false
+      # Needs the VPC: assertMembership() connects to RDS via the tenancy layer.
+      vpc_enabled      = true
       environment_vars = {}
     }
 

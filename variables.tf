@@ -337,3 +337,43 @@ variable "enable_xray_tracing" {
   type        = bool
   default     = false
 }
+
+# ---------------------------------------------------------------------------
+# Frontend app configuration (baked into the React builds via VITE_* env)
+# ---------------------------------------------------------------------------
+
+variable "app_name" {
+  description = "Display name shown across the frontend apps."
+  type        = string
+  default     = "AWS Hackathon"
+}
+
+variable "show_score" {
+  description = "Whether judges' scores are shown in the UI."
+  type        = bool
+  default     = false
+}
+
+variable "enable_scoring_datetime_control" {
+  description = "Enable the judge scoring open/lock window in the judge app."
+  type        = bool
+  default     = true
+}
+
+variable "scoring_start_date" {
+  description = "Judge scoring window start (ISO-8601 with offset, e.g. 2026-06-12T00:00:00+08:00)."
+  type        = string
+  default     = ""
+}
+
+variable "scoring_end_date" {
+  description = "Judge scoring window end (ISO-8601 with offset)."
+  type        = string
+  default     = ""
+}
+
+variable "scoring_lock_date" {
+  description = "Judge scoring lock time (ISO-8601 with offset)."
+  type        = string
+  default     = ""
+}

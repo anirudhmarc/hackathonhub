@@ -26,10 +26,10 @@ npm run lint
 ```
 
 Frontend apps and their directories:
-- `greataihackaton-admin-public` — Admin dashboard (React 19, react-router v7)
-- `greataihackaton-judge-public` — Judge scoring (React 18, react-router v6, has `npm run server` for backend proxy)
+- `hackerhub-admin-public` — Admin dashboard (React 19, react-router v7)
+- `hackerhub-judge-public` — Judge scoring (React 18, react-router v6, has `npm run server` for backend proxy)
 - `hackhub-public` — Participant portal (React 18, react-router v6)
-- `greataihackaton-hackhub-public` — Alternate participant portal (identical to hackhub-public)
+- `hackerhub-hackhub-public` — Alternate participant portal (identical to hackhub-public)
 
 ### Terraform Infrastructure (root directory)
 
