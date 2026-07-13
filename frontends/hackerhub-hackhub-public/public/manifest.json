@@ -1,0 +1,66 @@
+{
+  "name": "Deepgram × Pipecat × AWS Hackathon — Team Portal",
+  "short_name": "Voice AI Hackathon",
+  "description": "Build the future of Voice AI — work backwards from a real customer pain point. The official Team Portal for the Deepgram × Pipecat × AWS Hackathon.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#FF9900",
+  "orientation": "portrait-primary",
+  "categories": ["business", "education", "productivity"],
+  "lang": "en",
+  "dir": "ltr",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/aws-logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/aws-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "description": "Access your hackathon dashboard",
+      "url": "/dashboard",
+      "icons": [
+        {
+          "src": "/aws-logo.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Problem Statements",
+      "description": "Browse hackathon challenges",
+      "url": "/problems",
+      "icons": [
+        {
+          "src": "/aws-logo.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Submit Project",
+      "description": "Submit your hackathon project",
+      "url": "/submission",
+      "icons": [
+        {
+          "src": "/aws-logo.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}

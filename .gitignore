@@ -1,0 +1,40 @@
+# Terraform provider binaries (too large for GitHub)
+.terraform/providers/
+
+# Terraform state backup files
+terraform.tfstate.backup
+.terraform.tfstate.lock.info
+
+# Sensitive files
+.env
+*.pem
+*.key
+terraform.tfvars
+*.tfvars
+env/**/*.tfvars
+terraform.tfstate
+
+# Participant PII / credential exports — never commit
+participants.csv
+participant_credentials.csv
+*credentials*.csv
+
+# Saved Terraform plan files (binary, transient)
+tfplan
+tfplan.*
+*.tfplan
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+.gstack/
+lambda-code/layers/tenancy_layer.zip
