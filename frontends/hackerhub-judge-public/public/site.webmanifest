@@ -1,7 +1,7 @@
 {
-  "name": "Deepgram × Pipecat × AWS Hackathon — Judge Portal",
-  "short_name": "Voice AI Judge",
-  "description": "Deepgram × Pipecat × AWS Hackathon Judging System",
+  "name": "HackHub Hackathon — Judge Portal",
+  "short_name": "HackHub Judge",
+  "description": "HackHub Hackathon Judging System",
   "icons": [
     {
       "src": "/aws-logo.png",

@@ -12,7 +12,7 @@ const COGNITO_USER_POOL_ID = process.env.COGNITO_USER_POOL_ID;
 // Function name is injected by Terraform (COGNITO_MANAGER_FUNCTION). Fallback derives
 // it from the platform naming convention using PROJECT_NAME + ENVIRONMENT.
 const COGNITO_MANAGER_FUNCTION = process.env.COGNITO_MANAGER_FUNCTION
-  || `${process.env.PROJECT_NAME || 'deepgram-pipecat-aws'}-${process.env.ENVIRONMENT || 'dev'}-CognitoUserManager`;
+  || `${process.env.PROJECT_NAME || 'hackhub'}-${process.env.ENVIRONMENT || 'dev'}-CognitoUserManager`;
 
 async function invokeCognitoManager(email, name, groupName) {
   const payload = {

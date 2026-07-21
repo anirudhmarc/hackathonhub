@@ -159,7 +159,7 @@ judges/participants.
 Each env has its own gitignored tfvars. Key variables (defaults in `variables.tf`):
 
 ```hcl
-project_name = "deepgram-pipecat-aws"   # resource name prefix
+project_name = "hackhub"   # resource name prefix
 environment  = "dev"                     # one of: dev | test | staging | prod
 aws_region   = "us-east-1"
 

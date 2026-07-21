@@ -34,8 +34,8 @@ USER_POOL_ID="${USER_POOL_ID:-us-east-1_oABgAXtRj}"
 GROUP_NAME="${GROUP_NAME:-Participants}"
 DEFAULT_TRACK_ID="${DEFAULT_TRACK_ID:-72101be3-6921-11f0-b168-0efd9d2909e1}"
 DEFAULT_PROBLEM_ID="${DEFAULT_PROBLEM_ID:-prob-system}"
-COGNITO_FN="${COGNITO_FN:-deepgram-pipecat-aws-prod-CognitoUserManager}"
-SQL_FN="${SQL_FN:-deepgram-pipecat-aws-prod-SqlEditorLambda}"
+COGNITO_FN="${COGNITO_FN:-hackhub-prod-CognitoUserManager}"
+SQL_FN="${SQL_FN:-hackhub-prod-SqlEditorLambda}"
 
 # ---- Args ------------------------------------------------------------------
 INPUT_CSV="${1:-}"

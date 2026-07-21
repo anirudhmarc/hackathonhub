@@ -1,5 +1,4 @@
-# Deepgram × Pipecat × AWS Hackathon - Team Portal Robots.txt
-# Build the future of Voice AI
+# HackHub Hackathon - Team Portal Robots.txt
 
 User-agent: Googlebot
 Allow: /

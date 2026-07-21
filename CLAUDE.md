@@ -163,7 +163,7 @@ Invoke `SqlEditorLambda` with `{"sql":"..."}`. Prefer a payload **file** to avoi
 ```bash
 printf '%s' 'SELECT * FROM Hackathon' > /tmp/q.txt
 python3 -c "import json;print(json.dumps({'sql':open('/tmp/q.txt').read()}))" > /tmp/p.json
-aws lambda invoke --function-name deepgram-pipecat-aws-dev-SqlEditorLambda --region us-east-1 \
+aws lambda invoke --function-name hackhub-dev-SqlEditorLambda --region us-east-1 \
   --cli-binary-format raw-in-base64-out --payload file:///tmp/p.json /tmp/out.json
 ```
 
@@ -173,7 +173,7 @@ then invoke the initializer:
 ```bash
 terraform apply -replace=null_resource.db_init_trigger -var-file=env/dev/dev.tfvars
 # or invoke directly:
-aws lambda invoke --function-name deepgram-pipecat-aws-dev-HackhubDbInitializer --region us-east-1 /tmp/init.json
+aws lambda invoke --function-name hackhub-dev-HackhubDbInitializer --region us-east-1 /tmp/init.json
 ```
 For an **additive** change that must preserve data (e.g. prod), use `ALTER TABLE ...` via
 `SqlEditorLambda` — never the DROP-based initializer.
@@ -210,7 +210,7 @@ registration-approval; manually, use `SqlEditorLambda`.
 ```bash
 # Force a single app to rebuild+sync (src_hash triggers it automatically on edits)
 terraform apply -replace=module.admin_public.null_resource.deploy -var-file=env/dev/dev.tfvars
-aws logs tail /aws/lambda/deepgram-pipecat-aws-dev-<Name> --follow --region us-east-1
+aws logs tail /aws/lambda/hackhub-dev-<Name> --follow --region us-east-1
 ```
 
 ## Key Conventions
@@ -221,7 +221,7 @@ aws logs tail /aws/lambda/deepgram-pipecat-aws-dev-<Name> --follow --region us-e
 - DB-touching handlers must set `vpc_enabled = true`.
 - **Never commit secrets:** `*.tfvars`, `env/**/*.tfvars`, `.env`, and `*.tfstate` are gitignored.
   Each frontend `.env` is generated during `terraform apply`.
-- Resource names follow `${var.project_name}-${var.environment}-*` (e.g. `deepgram-pipecat-aws-dev-*`).
+- Resource names follow `${var.project_name}-${var.environment}-*` (e.g. `hackhub-dev-*`).
 - Path aliases: use `@/` imports in frontend code (resolves to `src/`).
 - Production-safety: assume prod when uncertain; never run the DROP-based initializer or delete
   resources against prod without explicit direction.

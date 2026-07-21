@@ -12,7 +12,7 @@ import crypto from 'crypto';
 const REGION = process.env.REGION || process.env.AWS_REGION || 'us-east-1';
 const TABLE_NAME = process.env.DYNAMODB_TABLE_NAME || 'HackathonRegistrations';
 const COGNITO_MANAGER_FUNCTION = process.env.COGNITO_MANAGER_FUNCTION
-  || `${process.env.PROJECT_NAME || 'deepgram-pipecat-aws'}-${process.env.ENVIRONMENT || 'dev'}-CognitoUserManager`;
+  || `${process.env.PROJECT_NAME || 'hackhub'}-${process.env.ENVIRONMENT || 'dev'}-CognitoUserManager`;
 const COGNITO_USER_POOL_ID = process.env.COGNITO_USER_POOL_ID;
 
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({ region: REGION }));

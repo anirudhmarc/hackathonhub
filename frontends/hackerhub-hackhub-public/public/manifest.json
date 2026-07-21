@@ -1,7 +1,7 @@
 {
-  "name": "Deepgram × Pipecat × AWS Hackathon — Team Portal",
-  "short_name": "Voice AI Hackathon",
-  "description": "Build the future of Voice AI — work backwards from a real customer pain point. The official Team Portal for the Deepgram × Pipecat × AWS Hackathon.",
+  "name": "HackHub Hackathon — Team Portal",
+  "short_name": "HackHub",
+  "description": "The official Team Portal for the HackHub Hackathon.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

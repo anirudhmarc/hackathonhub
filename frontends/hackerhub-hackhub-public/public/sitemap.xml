@@ -6,7 +6,7 @@
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
         xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
 
-  <!-- Homepage - Deepgram × Pipecat × AWS Hackathon -->
+  <!-- Homepage - HackHub Hackathon -->
   <url>
     <loc>https://hackathon.aws.dev/</loc>
     <lastmod>2025-01-01T00:00:00+08:00</lastmod>

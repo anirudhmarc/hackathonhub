@@ -1,5 +1,5 @@
 # ============================================================================
-# Database Seed Data — Deepgram x Pipecat x AWS Voice AI Hackathon
+# Database Seed Data — HackHub Hackathon
 # ============================================================================
 # Notes on the data model (the Lambda .zip code is fixed and cannot change):
 #  - Team registration (PostStudentTeam) hardcodes a default track_id of
@@ -24,7 +24,7 @@ resource "null_resource" "db_seed" {
   triggers = {
     db_init_id = null_resource.db_init_trigger.id
     # Re-seed when this file's intended content changes.
-    seed_version = "deepgram-pipecat-aws-v1"
+    seed_version = "hackhub-v1"
   }
 
   provisioner "local-exec" {
@@ -44,7 +44,7 @@ resource "null_resource" "db_seed" {
       # Insert the editable event AGENDA (Problem_Statement rows on the default track)
       aws lambda invoke --function-name ${module.lambda_api.lambda_function_names["SqlEditorLambda"]} \
         --region ${var.aws_region} --cli-binary-format raw-in-base64-out \
-        --payload '{"sql":"INSERT INTO Problem_Statement (problem_id, problem_title, problem_description, problem_tag, problem_max_slots, track_id) VALUES (\"agenda-1\", \"Intro and presentation by Deepgram\", \"Kickoff: Organizer opening remarks (Guha Roy) ~5 min. Deepgram + Daily open the session ~10 min. Deepgram + Daily technical walkthrough including how to get API access ~45 min.\", \"Kickoff\", 0, \"${local.default_track_id}\"), (\"agenda-2\", \"Q&A with Deepgram and Hackathon Champions\", \"Open Q&A with the Deepgram team and the hackathon champions ~20 min.\", \"Kickoff\", 0, \"${local.default_track_id}\"), (\"agenda-3\", \"Building Session\", \"Teams build their Voice AI solution, working backwards from a real customer pain point.\", \"Jun 9 - Jun 12\", 0, \"${local.default_track_id}\"), (\"agenda-4\", \"Submission of MVP\", \"Submit your MVP: video demo, internal Amazon GitLab repository, and optional demo app URL.\", \"Jun 12\", 0, \"${local.default_track_id}\"), (\"agenda-5\", \"Judging\", \"Judges review and score each submission.\", \"Jun 12 - Jun 14\", 0, \"${local.default_track_id}\"), (\"agenda-6\", \"Winner Announcement\", \"Finalists and winners are announced.\", \"Jun 15\", 0, \"${local.default_track_id}\")"}' \
+        --payload '{"sql":"INSERT INTO Problem_Statement (problem_id, problem_title, problem_description, problem_tag, problem_max_slots, track_id) VALUES (\"agenda-1\", \"Intro and presentation\", \"Kickoff: Organizer opening remarks (Guha Roy) ~5 min. Partners open the session ~10 min. Technical walkthrough including how to get API access ~45 min.\", \"Kickoff\", 0, \"${local.default_track_id}\"), (\"agenda-2\", \"Q&A with Hackathon Champions\", \"Open Q&A with the organizing team and the hackathon champions ~20 min.\", \"Kickoff\", 0, \"${local.default_track_id}\"), (\"agenda-3\", \"Building Session\", \"Teams build their Voice AI solution, working backwards from a real customer pain point.\", \"Jun 9 - Jun 12\", 0, \"${local.default_track_id}\"), (\"agenda-4\", \"Submission of MVP\", \"Submit your MVP: video demo, internal Amazon GitLab repository, and optional demo app URL.\", \"Jun 12\", 0, \"${local.default_track_id}\"), (\"agenda-5\", \"Judging\", \"Judges review and score each submission.\", \"Jun 12 - Jun 14\", 0, \"${local.default_track_id}\"), (\"agenda-6\", \"Winner Announcement\", \"Finalists and winners are announced.\", \"Jun 15\", 0, \"${local.default_track_id}\")"}' \
         /tmp/seed3.json
 
       # Insert the JUDGING RUBRIC (Problem_Statement rows tagged __RUBRIC__).
