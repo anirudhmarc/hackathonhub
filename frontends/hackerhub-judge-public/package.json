@@ -55,7 +55,7 @@
     "express": "^5.1.0",
     "input-otp": "^1.2.4",
     "lucide-react": "^0.462.0",
-    "mysql2": "^3.14.2",
+    "mysql2": "^3.22.0",
     "next-themes": "^0.3.0",
     "oidc-client-ts": "^3.2.0",
     "react": "^18.3.1",
