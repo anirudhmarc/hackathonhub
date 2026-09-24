@@ -1,6 +1,11 @@
 // get-participants/index.js - multi-tenant: filters registrations by hackathon_id
+import { createRequire } from 'module';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, ScanCommand } from '@aws-sdk/lib-dynamodb';
+
+// Bridge the CommonJS tenancy layer (/opt/nodejs/tenancy.js) into this ES module.
+const require = createRequire(import.meta.url);
+const t = require('/opt/nodejs/tenancy');
 
 const REGION = process.env.REGION || process.env.AWS_REGION || 'us-east-1';
 const TABLE_NAME = process.env.DYNAMODB_TABLE_NAME || 'HackathonRegistrations';
@@ -15,20 +20,19 @@ const HEADERS = {
   'Access-Control-Allow-Methods': 'GET,OPTIONS',
 };
 
-const resolveHackathonId = (event) => {
-  const pp = event.pathParameters || {};
-  if (pp.hackathonId) return pp.hackathonId;
-  const h = event.headers || {};
-  return h['X-Hackathon-Id'] || h['x-hackathon-id'] || event.queryStringParameters?.hackathonId || null;
-};
-
 export const handler = async (event) => {
   const method = event.requestContext?.http?.method || event.httpMethod;
   if (method === 'OPTIONS') return { statusCode: 200, headers: HEADERS, body: JSON.stringify({ message: 'ok' }) };
 
   try {
-    const hackathonId = resolveHackathonId(event);
+    // Tenant scope comes from the PATH only — never attacker-controlled header/query.
+    const hackathonId = event.pathParameters?.hackathonId;
     if (!hackathonId) return { statusCode: 400, headers: HEADERS, body: JSON.stringify({ message: 'Missing hackathon id' }) };
+
+    // Authorize: caller must be a host of THIS hackathon (Admins bypass).
+    const caller = t.getCaller(event);
+    const conn = await t.getConnection();
+    await t.assertMembership(conn, caller, hackathonId, 'host');
 
     // Filter registrations to this hackathon.
     const data = await docClient.send(new ScanCommand({
@@ -69,6 +73,9 @@ export const handler = async (event) => {
 
     return { statusCode: 200, headers: HEADERS, body: JSON.stringify(participants) };
   } catch (error) {
+    if (error && error.statusCode) {
+      return { statusCode: error.statusCode, headers: HEADERS, body: JSON.stringify({ message: error.message }) };
+    }
     console.error('Error fetching participants:', error);
     return { statusCode: 500, headers: HEADERS, body: JSON.stringify({ message: 'Internal Server Error', error: error.message }) };
   }

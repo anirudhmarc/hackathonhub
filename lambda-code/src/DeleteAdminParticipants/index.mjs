@@ -1,7 +1,12 @@
 // delete-admin-participants/index.js - multi-tenant: scoped to hackathon_id
 
+import { createRequire } from "module";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, DeleteCommand } from "@aws-sdk/lib-dynamodb";
+
+// Bridge the CommonJS tenancy layer (/opt/nodejs/tenancy.js) into this ES module.
+const require = createRequire(import.meta.url);
+const t = require('/opt/nodejs/tenancy');
 
 const client = new DynamoDBClient({ region: process.env.REGION || "ap-southeast-2" });
 const docClient = DynamoDBDocumentClient.from(client);
@@ -13,18 +18,6 @@ const HEADERS = {
     "Access-Control-Allow-Origin": process.env.ALLOWED_ORIGIN || "*", // Allow all origins
     "Access-Control-Allow-Headers": "Content-Type,Authorization,X-Hackathon-Id",
     "Access-Control-Allow-Methods": "DELETE,OPTIONS",
-};
-
-const resolveHackathonId = (event) => {
-    const pp = event.pathParameters || {};
-    if (pp.hackathonId) return pp.hackathonId;
-    const h = event.headers || {};
-    if (h['X-Hackathon-Id'] || h['x-hackathon-id']) return h['X-Hackathon-Id'] || h['x-hackathon-id'];
-    let body = {};
-    if (event.body) {
-        try { body = JSON.parse(event.body); } catch (e) { body = {}; }
-    }
-    return body.hackathon_id || null;
 };
 
 export const handler = async (event) => {
@@ -41,7 +34,8 @@ export const handler = async (event) => {
     }
 
     try {
-        const hackathonId = resolveHackathonId(event);
+        // Tenant scope comes from the PATH only — never attacker-controlled header/body.
+        const hackathonId = event.pathParameters?.hackathonId;
         if (!hackathonId) {
             return {
                 statusCode: 400,
@@ -49,6 +43,11 @@ export const handler = async (event) => {
                 body: JSON.stringify({ message: 'Missing hackathon id' }),
             };
         }
+
+        // Authorize: caller must be a host of THIS hackathon (Admins bypass).
+        const caller = t.getCaller(event);
+        const conn = await t.getConnection();
+        await t.assertMembership(conn, caller, hackathonId, 'host');
 
         const participantId = event.pathParameters?.id || event.pathParameters?.participantId;
 
@@ -82,6 +81,13 @@ export const handler = async (event) => {
         };
 
     } catch (error) {
+        if (error && error.statusCode) {
+            return {
+                statusCode: error.statusCode,
+                headers: responseHeaders,
+                body: JSON.stringify({ message: error.message }),
+            };
+        }
         if (error.name === 'ConditionalCheckFailedException') {
             console.warn('Participant not found for this hackathon');
             return {

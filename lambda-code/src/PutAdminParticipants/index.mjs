@@ -1,7 +1,12 @@
 // put-admin-participants/index.js - multi-tenant: scoped to hackathon_id
 
+import { createRequire } from "module";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+
+// Bridge the CommonJS tenancy layer (/opt/nodejs/tenancy.js) into this ES module.
+const require = createRequire(import.meta.url);
+const t = require('/opt/nodejs/tenancy');
 
 // Configure AWS DynamoDB DocumentClient
 const client = new DynamoDBClient({ region: process.env.REGION || "ap-southeast-2" });
@@ -20,14 +25,6 @@ const HEADERS = {
     "Access-Control-Allow-Methods": "PUT,OPTIONS",
 };
 
-const resolveHackathonId = (event, body) => {
-    const pp = event.pathParameters || {};
-    if (pp.hackathonId) return pp.hackathonId;
-    const h = event.headers || {};
-    if (h['X-Hackathon-Id'] || h['x-hackathon-id']) return h['X-Hackathon-Id'] || h['x-hackathon-id'];
-    return body?.hackathon_id || null;
-};
-
 export const handler = async (event) => {
     console.log('Received event:', JSON.stringify(event));
 
@@ -43,6 +40,21 @@ export const handler = async (event) => {
     }
 
     try {
+        // Tenant scope comes from the PATH only — never attacker-controlled header/body.
+        const hackathonId = event.pathParameters?.hackathonId;
+        if (!hackathonId) {
+            return {
+                statusCode: 400,
+                headers: responseHeaders,
+                body: JSON.stringify({ message: 'Missing hackathon id' }),
+            };
+        }
+
+        // Authorize: caller must be a host of THIS hackathon (Admins bypass).
+        const caller = t.getCaller(event);
+        const conn = await t.getConnection();
+        await t.assertMembership(conn, caller, hackathonId, 'host');
+
         const participantId = event.pathParameters?.id; // Get ID from path parameters
         const body = JSON.parse(event.body);
         const {
@@ -56,16 +68,6 @@ export const handler = async (event) => {
             agreeTermsConditions,
             status // Optional: to update status (PENDING_APPROVAL, APPROVED, REJECTED)
         } = body;
-
-        // Resolve hackathon scope (path / header / body)
-        const hackathonId = resolveHackathonId(event, body);
-        if (!hackathonId) {
-            return {
-                statusCode: 400,
-                headers: responseHeaders,
-                body: JSON.stringify({ message: 'Missing hackathon id' }),
-            };
-        }
 
         // Basic validation for the ID
         if (!participantId) {
@@ -156,6 +158,13 @@ export const handler = async (event) => {
         };
 
     } catch (error) {
+        if (error && error.statusCode) {
+            return {
+                statusCode: error.statusCode,
+                headers: responseHeaders,
+                body: JSON.stringify({ message: error.message }),
+            };
+        }
         if (error.name === 'ConditionalCheckFailedException') {
             console.warn('Participant not found for this hackathon');
             return {

@@ -98,7 +98,7 @@ locals {
       timeout          = 870
       memory_size      = 2048
       filename         = "GetAdminParticipants_code.zip"
-      vpc_enabled      = false
+      vpc_enabled      = true
       environment_vars = {}
     }
 
@@ -433,13 +433,13 @@ locals {
     }
 
     GetSubmissionPresignedUrls = {
-      group            = "participant"
-      permissions      = ["s3"]
-      handler          = "index.handler"
-      runtime          = "nodejs22.x"
-      timeout          = 30
-      memory_size      = 128
-      filename         = "GetSubmissionPresignedUrls_code.zip"
+      group       = "participant"
+      permissions = ["s3"]
+      handler     = "index.handler"
+      runtime     = "nodejs22.x"
+      timeout     = 30
+      memory_size = 128
+      filename    = "GetSubmissionPresignedUrls_code.zip"
       # Needs the VPC: assertMembership() connects to RDS via the tenancy layer.
       vpc_enabled      = true
       environment_vars = {}
@@ -560,8 +560,9 @@ locals {
     # User Management & Authentication Functions
     # ========================================================================
     ApproveParticipant = {
-      group            = "utility"
-      permissions      = ["cognito-idp", "ses"]
+      group = "utility"
+      # secretsmanager: reads the DB secret (its own dbCreds() + assertMembership via tenancy layer).
+      permissions      = ["cognito-idp", "ses", "secretsmanager"]
       handler          = "index.handler"
       runtime          = "nodejs22.x"
       timeout          = 90
@@ -611,14 +612,19 @@ locals {
     # Utility & Background Functions
     # ========================================================================
     BroadcastEmailLambda = {
-      group       = "utility"
-      permissions = ["ses"]
+      group = "utility"
+      # secretsmanager: assertMembership() reads the DB secret via the tenancy layer.
+      permissions = ["ses", "secretsmanager"]
       handler     = "index.handler"
       runtime     = "nodejs22.x"
       timeout     = 300
       memory_size = 512
       filename    = "BroadcastEmailLambda_code.zip"
-      vpc_enabled = false
+      # VPC-enabled so the tenant-authorization check can reach RDS. NOTE: without a
+      # NAT gateway / SES VPC endpoint in this env, SES SendEmail has no egress route
+      # (same tradeoff PostAdminParticipants already accepts). The 403 for unauthorized
+      # callers still fires before any SES call. Production: add NAT or an out-of-VPC relay.
+      vpc_enabled = true
       environment_vars = {
         SES_REGION = data.aws_region.current.name
       }

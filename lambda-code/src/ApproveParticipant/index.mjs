@@ -2,12 +2,17 @@
 // Reads a DynamoDB registration, provisions RDS Leader/Team scoped to the
 // registration's hackathon, writes participant memberships, fires Cognito user
 // creation (async), and marks the registration APPROVED.
+import { createRequire } from 'module';
 import mysql from 'mysql2/promise';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, GetCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
 import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
 import crypto from 'crypto';
+
+// Bridge the CommonJS tenancy layer (/opt/nodejs/tenancy.js) into this ES module.
+const require = createRequire(import.meta.url);
+const t = require('/opt/nodejs/tenancy');
 
 const REGION = process.env.REGION || process.env.AWS_REGION || 'us-east-1';
 const TABLE_NAME = process.env.DYNAMODB_TABLE_NAME || 'HackathonRegistrations';
@@ -55,13 +60,25 @@ export const handler = async (event) => {
     const participantId = event.pathParameters?.id;
     if (!participantId) return resp(400, { message: 'Participant ID is required.' });
 
+    // Tenant scope comes from the PATH only — never the fetched record.
+    const hackathonId = event.pathParameters?.hackathonId;
+    if (!hackathonId) return resp(400, { message: 'Missing hackathon id' });
+
+    // Authorize: caller must be a host of THIS hackathon (Admins bypass).
+    const caller = t.getCaller(event);
+    const authConn = await t.getConnection();
+    await t.assertMembership(authConn, caller, hackathonId, 'host');
+
     // Registrations are keyed by `id`.
     const getResult = await ddb.send(new GetCommand({ TableName: TABLE_NAME, Key: { participant_id: participantId } }));
     if (!getResult.Item) return resp(404, { message: 'Participant not found.' });
     const participant = getResult.Item;
 
-    const hackathonId = participant.hackathon_id || event.pathParameters?.hackathonId;
-    if (!hackathonId) return resp(400, { message: 'Registration has no hackathon_id.' });
+    // Prevent split-brain: the registration MUST belong to the authorized hackathon.
+    // Otherwise a host of hackathon A could approve a registration in hackathon B.
+    if (participant.hackathon_id && participant.hackathon_id !== hackathonId) {
+      return resp(404, { message: 'Participant not found.' });
+    }
 
     const leaderInfo = typeof participant.leader === 'string' ? JSON.parse(participant.leader) : participant.leader;
     const membersInfo = typeof participant.members === 'string' ? JSON.parse(participant.members) : (participant.members || []);
@@ -151,6 +168,9 @@ export const handler = async (event) => {
       rds: { leader_id: leaderId, team_id: teamId, track_id: trackId },
     });
   } catch (error) {
+    if (error && error.statusCode) {
+      return resp(error.statusCode, { message: error.message });
+    }
     console.error('ApproveParticipant error:', error);
     return resp(500, { message: 'Failed to approve participant', error: error.message });
   } finally {

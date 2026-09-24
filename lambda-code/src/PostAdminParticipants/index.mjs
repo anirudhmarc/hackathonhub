@@ -1,9 +1,14 @@
 // post-admin-participants/index.js - FINAL CORRECTED CODE
 
+import { createRequire } from "module";
+import { randomUUID } from "crypto";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, PutCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
 import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
-import { v4 as uuidv4 } from 'uuid';
+
+// Bridge the CommonJS tenancy layer (/opt/nodejs/tenancy.js) into this ES module.
+const require = createRequire(import.meta.url);
+const t = require('/opt/nodejs/tenancy');
 
 // Configure AWS SDK clients
 // Ensure your DynamoDB table is in this region
@@ -20,16 +25,6 @@ const sesClient = new SESClient({ region: process.env.REGION || process.env.AWS_
 const TableName = process.env.DYNAMODB_TABLE_NAME || process.env.DYNAMODB_TABLE_NAME || process.env.TABLE_NAME || "HackathonRegistrations"; // Default for local, ensure set in Lambda Env Vars
 const FROM_EMAIL = process.env.FROM_EMAIL || "noreply@greataihackathon.com"; // Default, ensure set in Lambda Env Vars
 const allowedOrigin = process.env.ALLOWED_ORIGIN || "http://localhost:8080"; // Default for local, ensure set in Lambda Env Vars
-
-// Resolve the hackathon scope from path / header / body.
-const resolveHackathonId = (event, body) => {
-    const pp = event.pathParameters || {};
-    if (pp.hackathonId) return pp.hackathonId;
-    const h = event.headers || {};
-    if (h['X-Hackathon-Id'] || h['x-hackathon-id']) return h['X-Hackathon-Id'] || h['x-hackathon-id'];
-    return body?.hackathon_id || null;
-};
-
 
 // Email template function with dynamic recipient name
 const generateConfirmationEmail = (registrationData, recipientName) => {
@@ -343,8 +338,8 @@ export const handler = async (event) => {
             agreeMarketingEmails
         } = data;
 
-        // Resolve the hackathon scope (path / header / body). Required for multi-tenant writes.
-        const hackathonId = resolveHackathonId(event, data);
+        // Tenant scope comes from the PATH only — never attacker-controlled header/body.
+        const hackathonId = event.pathParameters?.hackathonId;
         if (!hackathonId) {
             console.error("Missing hackathon id");
             return {
@@ -353,6 +348,11 @@ export const handler = async (event) => {
                 body: JSON.stringify({ message: 'Missing hackathon id' }),
             };
         }
+
+        // Authorize: caller must be a host of THIS hackathon (Admins bypass).
+        const caller = t.getCaller(event);
+        const conn = await t.getConnection();
+        await t.assertMembership(conn, caller, hackathonId, 'host');
 
         // Calculate memberCount based on actual leader and members
         const memberCount = 1 + (members?.length || 0);
@@ -384,9 +384,12 @@ export const handler = async (event) => {
         // === UNIQUENESS VALIDATION ===
         console.log("Starting uniqueness validation...");
         
-        // Get all existing registrations to check for duplicates
+        // Get existing registrations to check for duplicates — scoped to THIS hackathon
+        // only, so uniqueness checks never read another tenant's PII.
         const scanCommand = new ScanCommand({
             TableName: TableName,
+            FilterExpression: "hackathon_id = :h",
+            ExpressionAttributeValues: { ":h": hackathonId },
             ProjectionExpression: "participant_id, teamName, emails, leader, members" // Include 'participant_id' for logging/debugging if needed
         });
         
@@ -573,7 +576,7 @@ export const handler = async (event) => {
         console.log("All data validations passed.");
 
         // Generate unique registration ID and timestamp
-        const registrationId = `REG_${Date.now()}_${uuidv4().substring(0, 9)}`; // Shorter UUID for ID
+        const registrationId = `REG_${Date.now()}_${randomUUID().substring(0, 9)}`; // Shorter UUID for ID
         const timestamp = new Date().toISOString();
 
         console.log("Generated registration ID:", registrationId);
@@ -661,14 +664,21 @@ export const handler = async (event) => {
         };
 
     } catch (err) {
+        if (err && err.statusCode) {
+            return {
+                statusCode: err.statusCode,
+                headers: responseHeaders,
+                body: JSON.stringify({ message: err.message }),
+            };
+        }
         console.error("Lambda error:", err);
         console.error("Error stack:", err.stack);
         return {
             statusCode: 500,
             headers: responseHeaders,
-            body: JSON.stringify({ 
-                message: "Internal server error during participant addition", 
-                error: err.message 
+            body: JSON.stringify({
+                message: "Internal server error during participant addition",
+                error: err.message
             }),
         };
     }

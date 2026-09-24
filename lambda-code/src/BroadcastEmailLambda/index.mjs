@@ -1,7 +1,12 @@
 // lambda/broadcast-email/index.js - multi-tenant: scoped to hackathon_id
+import { createRequire } from "module";
 import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
 import { DynamoDBClient, ScanCommand } from "@aws-sdk/client-dynamodb";
 import { unmarshall } from "@aws-sdk/util-dynamodb";
+
+// Bridge the CommonJS tenancy layer (/opt/nodejs/tenancy.js) into this ES module.
+const require = createRequire(import.meta.url);
+const t = require('/opt/nodejs/tenancy');
 
 const sesClient = new SESClient({ region: process.env.SES_REGION || "ap-southeast-1" });
 const ddbClient = new DynamoDBClient({ region: process.env.REGION || process.env.AWS_REGION || "us-east-1" });
@@ -11,14 +16,6 @@ const RATE_LIMIT_PER_SECOND = 12;
 
 // Utility function to introduce a delay
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-const resolveHackathonId = (event, body) => {
-    const pp = event.pathParameters || {};
-    if (pp.hackathonId) return pp.hackathonId;
-    const h = event.headers || {};
-    if (h['X-Hackathon-Id'] || h['x-hackathon-id']) return h['X-Hackathon-Id'] || h['x-hackathon-id'];
-    return body?.hackathon_id || null;
-};
 
 // Helper function to fetch all participant emails from DynamoDB, scoped to a hackathon
 const fetchEmails = async (trackType, hackathonId) => {
@@ -127,13 +124,26 @@ export const handler = async (event) => {
     const parsedBody = JSON.parse(event.body);
     const { subject, body, recipient_type, individual_emails } = parsedBody;
 
-    // Resolve the hackathon scope (path / header / body).
-    const hackathonId = resolveHackathonId(event, parsedBody);
+    // Tenant scope comes from the PATH only — never attacker-controlled header/body.
+    const hackathonId = event.pathParameters?.hackathonId;
     if (!hackathonId) {
         return {
             statusCode: 400,
             headers: responseHeaders,
             body: JSON.stringify({ message: "Missing hackathon id" }),
+        };
+    }
+
+    // Authorize: caller must be a host of THIS hackathon (Admins bypass) before any recipient fetch or SES send.
+    try {
+        const caller = t.getCaller(event);
+        const conn = await t.getConnection();
+        await t.assertMembership(conn, caller, hackathonId, 'host');
+    } catch (err) {
+        return {
+            statusCode: err?.statusCode || 500,
+            headers: responseHeaders,
+            body: JSON.stringify({ message: err?.message || "Authorization failed" }),
         };
     }
 
