@@ -44,10 +44,15 @@ Frontend apps and their directories:
 ### Terraform Infrastructure (root directory)
 
 State and config are **per-environment**. There is no root `terraform.tfvars`; each env has
-its own backend config + (gitignored) tfvars.
+its own backend config + tfvars, **both gitignored**. Only the `.example` templates are committed:
+run `./bootstrap-backend.sh <env>` to generate `backend.config` for the current account, and
+`cp env/<env>/<env>.tfvars.example env/<env>/<env>.tfvars` for the vars (`db_password` is the only
+variable with no default). The README's "Deploy a fresh version from scratch" section is the
+end-to-end runbook.
 
 ```bash
 # DEV
+./bootstrap-backend.sh dev   # first time in a given account only (idempotent)
 terraform init -reconfigure -backend-config=env/dev/backend.config
 terraform plan  -var-file=env/dev/dev.tfvars
 terraform apply -var-file=env/dev/dev.tfvars
@@ -64,6 +69,32 @@ terraform validate       # validate configuration
 > **Env isolation:** dev and prod share the same state bucket + lock table but use distinct
 > state **keys** (`.../dev/...` vs `.../prod/...`) and distinct `vpc_cidr`. Always confirm which
 > backend is active (`grep key .terraform/terraform.tfstate`) before planning/applying.
+
+### Bootstrap the state backend (per account — manual prerequisite)
+The S3 state bucket + DynamoDB lock table are **NOT managed by this Terraform** (Terraform can't
+create the backend that holds its own state). They are a one-time prerequisite **per AWS account**:
+
+```bash
+./bootstrap-backend.sh dev            # or prod;  PROJECT_NAME=/REGION= to override defaults
+./bootstrap-backend.sh dev --force    # re-render an existing backend.config
+```
+
+The script resolves the account ID from the **caller's own credentials**, creates
+`hackhub-tfstate-<account_id>` (versioned, AES256, public-access blocked) and `hackhub-tflock`
+(PAY_PER_REQUEST, `LockID` HASH key) only if absent, then renders `env/<env>/backend.config` from
+the committed `.example` template. Idempotent and non-destructive — it never deletes or
+reconfigures existing state, and re-running on a bootstrapped account is a no-op. It prompts for
+confirmation before bootstrapping `prod`.
+
+Because the bucket name embeds an account ID, **no `backend.config` is committed** — that's what
+keeps a clone independent of any particular account. Each account has its own bucket, state, and
+resources; a freshly bootstrapped account starts from empty state, so the first `apply` builds a
+complete new stack.
+
+> **Symptom of a missing bucket or a `backend.config` pointing at an account you don't own:**
+> `terraform init` → `Error refreshing state: ... HeadObject ... 403 Forbidden`. S3 returns **403,
+> not 404**, for a bucket owned by another account, so a stale bucket name reads like a permissions
+> bug. Fix: `./bootstrap-backend.sh <env> --force`, then re-init.
 
 ## Architecture
 
@@ -219,8 +250,10 @@ aws logs tail /aws/lambda/hackhub-dev-<Name> --follow --region us-east-1
 - Lambda functions are pre-packaged `.zip` files in `lambda-code/`; editable sources in `lambda-code/src/`.
 - Use SDK **v3** in Lambda code (built into nodejs22.x). Only `mysql2` needs bundling (via the tenancy layer or per-zip `node_modules`).
 - DB-touching handlers must set `vpc_enabled = true`.
-- **Never commit secrets:** `*.tfvars`, `env/**/*.tfvars`, `.env`, and `*.tfstate` are gitignored.
-  Each frontend `.env` is generated during `terraform apply`.
+- **Never commit secrets or account-specific config:** `*.tfvars`, `env/**/*.tfvars`, `.env`,
+  `*.tfstate`, and `env/**/backend.config` are gitignored. Each frontend `.env` is generated during
+  `terraform apply`; each `backend.config` by `./bootstrap-backend.sh`. Commit changes to the
+  `env/**/backend.config.example` templates instead — never a rendered config with a real account ID.
 - Resource names follow `${var.project_name}-${var.environment}-*` (e.g. `hackhub-dev-*`).
 - Path aliases: use `@/` imports in frontend code (resolves to `src/`).
 - Production-safety: assume prod when uncertain; never run the DROP-based initializer or delete

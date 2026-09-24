@@ -1,0 +1,32 @@
+# ============================================================================
+# Development Backend Configuration — TEMPLATE (us-east-1)
+# ============================================================================
+# The real `backend.config` is gitignored because the bucket name embeds an AWS
+# ACCOUNT ID. Every account is fully independent: its own state bucket, its own
+# lock table, its own resources. Never point this at someone else's bucket —
+# S3 answers `403 Forbidden` on a bucket you don't own, and `terraform init`
+# fails with `Error refreshing state: ... HeadObject ... 403 Forbidden`.
+#
+# Setup (creates the bucket + lock table in YOUR account, then writes
+# env/dev/backend.config from this template):
+#
+#   ./bootstrap-backend.sh dev
+#
+# Or copy it by hand and replace <ACCOUNT_ID> with your own:
+#
+#   cp env/dev/backend.config.example env/dev/backend.config
+#   aws sts get-caller-identity --query Account --output text   # <ACCOUNT_ID>
+#
+# Then:
+#   terraform init -reconfigure -backend-config=env/dev/backend.config
+#   terraform apply -var-file=env/dev/dev.tfvars
+#
+# Isolated from prod by a distinct state KEY. The bucket and lock table are
+# account-global and shared with prod — the different key is full isolation.
+# ============================================================================
+
+bucket         = "hackhub-tfstate-<ACCOUNT_ID>"
+key            = "hackhub/dev/terraform.tfstate"
+region         = "us-east-1"
+encrypt        = true
+dynamodb_table = "hackhub-tflock"

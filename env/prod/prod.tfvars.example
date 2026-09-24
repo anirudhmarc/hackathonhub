@@ -1,0 +1,55 @@
+# ============================================================================
+# Terraform Variables — PROD — TEMPLATE
+# ============================================================================
+# Copy to env/prod/prod.tfvars (gitignored — it holds the DB password) and edit:
+#
+#   cp env/prod/prod.tfvars.example env/prod/prod.tfvars
+#
+# Then:
+#   terraform init -reconfigure -backend-config=env/prod/backend.config
+#   terraform plan  -var-file=env/prod/prod.tfvars    # ALWAYS plan first on prod
+#   terraform apply -var-file=env/prod/prod.tfvars
+#
+# Differences from dev are deliberate: deletion protection ON, final snapshot
+# taken, a distinct vpc_cidr, and no wildcard CORS.
+# ============================================================================
+
+project_name = "hackhub"
+environment  = "prod"
+aws_region   = "us-east-1"
+owner        = "Your Team"
+cost_center  = "Engineering"
+
+# Networking — MUST NOT overlap dev (dev = 10.30.0.0/16).
+vpc_cidr = "10.20.0.0/16"
+az_count = 2
+
+enable_nat_gateway             = false
+enable_secretsmanager_endpoint = true
+enable_ses_endpoint            = false
+enable_lambda_endpoint         = true
+
+# Database — protective settings for prod.
+db_name              = "hackhub"
+db_username          = "admin"
+db_password          = "CHANGE_ME_strong_unique_password"
+db_instance_class    = "db.t3.small"
+db_allocated_storage = 20
+db_multi_az          = false # set true for HA (roughly doubles RDS cost)
+# Keep these two as-is on prod: they prevent accidental data loss.
+db_deletion_protection = true
+db_skip_final_snapshot = false
+
+admin_email = "you@example.com"
+
+# Restrict these to your real portal origins rather than "*".
+cloudfront_price_class = "PriceClass_100"
+cors_allowed_origins   = ["*"]
+allowed_origin         = "*"
+
+app_name                        = "AWS Hackathon"
+show_score                      = false
+enable_scoring_datetime_control = true
+scoring_start_date              = "2026-06-12T00:00:00+08:00"
+scoring_end_date                = "2026-06-28T23:59:00+08:00"
+scoring_lock_date               = "2026-06-29T00:00:00+08:00"

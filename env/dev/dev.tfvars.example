@@ -1,0 +1,59 @@
+# ============================================================================
+# Terraform Variables — DEV — TEMPLATE
+# ============================================================================
+# Copy to env/dev/dev.tfvars (gitignored — it holds the DB password) and edit:
+#
+#   cp env/dev/dev.tfvars.example env/dev/dev.tfvars
+#
+# Then:
+#   terraform init -reconfigure -backend-config=env/dev/backend.config
+#   terraform apply -var-file=env/dev/dev.tfvars
+#
+# `environment = "dev"` names every resource hackhub-dev-* (prod is ...-prod-*),
+# so dev and prod coexist in one account without collisions.
+# ============================================================================
+
+project_name = "hackhub"
+environment  = "dev"
+aws_region   = "us-east-1"
+owner        = "Your Team"
+cost_center  = "Engineering"
+
+# Networking — MUST NOT overlap any other environment in this account.
+vpc_cidr = "10.30.0.0/16"
+az_count = 2
+
+# Cost controls. No NAT Gateway (~$64/mo saved); VPC endpoints instead.
+enable_nat_gateway             = false
+enable_secretsmanager_endpoint = true
+# email-smtp interface endpoint isn't available in every us-east-1 AZ.
+enable_ses_endpoint = false
+# Lets VPC-enabled handlers invoke other Lambdas (e.g. CognitoUserManager) without NAT.
+enable_lambda_endpoint = true
+
+# Database. db_password is the ONLY variable with no default — it is required.
+# Use a strong, unique value; it is stored in Secrets Manager after apply.
+db_name                = "hackhub"
+db_username            = "admin"
+db_password            = "CHANGE_ME_strong_unique_password"
+db_instance_class      = "db.t3.small"
+db_allocated_storage   = 20
+db_multi_az            = false
+db_deletion_protection = false
+db_skip_final_snapshot = true
+
+# Cognito — receives the default users' verification email.
+admin_email = "you@example.com"
+
+# S3 + CloudFront. Tighten these for anything internet-facing and real.
+cloudfront_price_class = "PriceClass_100"
+cors_allowed_origins   = ["*"]
+allowed_origin         = "*"
+
+# Frontend config — baked into the React builds as VITE_* at apply time.
+app_name                        = "AWS Hackathon"
+show_score                      = false
+enable_scoring_datetime_control = true
+scoring_start_date              = "2026-06-12T00:00:00+08:00"
+scoring_end_date                = "2026-06-28T23:59:00+08:00"
+scoring_lock_date               = "2026-06-29T00:00:00+08:00"

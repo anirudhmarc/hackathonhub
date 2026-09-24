@@ -59,9 +59,10 @@ Root (Terraform)
 ├── frontends.tf        # wires each React app to its bucket / Cognito / API / config
 ├── db_init.tf          # invokes HackhubDbInitializer (creates schema — destructive)
 ├── db_seed.tf          # legacy single-tenant seed (superseded by CreateHackathon)
+├── bootstrap-backend.sh  # one-time: creates YOUR account's state bucket + lock table
 ├── env/
-│   ├── dev/  backend.config + dev.tfvars   (tfvars gitignored)
-│   └── prod/ backend.config  (+ prod.tfvars you create locally, gitignored)
+│   ├── dev/  backend.config.example + dev.tfvars.example    (the real files are gitignored)
+│   └── prod/ backend.config.example + prod.tfvars.example   (copy + edit locally)
 ├── lambda-code/
 │   ├── <Name>_code.zip      # prebuilt deployment artifacts (what Terraform deploys)
 │   ├── src/<Name>/index.*   # editable handler sources
@@ -123,13 +124,180 @@ Single REST API with a Cognito authorizer. All tenant routes are nested under
 - Terraform `>= 1.5.0`, AWS provider `~> 5.0`
 - AWS credentials configured (`aws sts get-caller-identity` should succeed)
 - Node.js (the frontend module builds the React apps locally during `apply`)
+- `aws` CLI v2, `zip`, and `unzip` on `PATH`
+
+---
+
+## 🆕 Deploy a fresh version from scratch
+
+Everything below assumes a **clean clone** into an AWS account that has never run this stack. It
+provisions a complete, independent deployment — VPC, RDS, Cognito, 51 Lambdas, API Gateway, and three
+CloudFront portals. Nothing is shared with any other account or clone.
+
+> **Cost warning:** this creates real billable resources (RDS `db.t3.small`, 3 CloudFront
+> distributions, interface VPC endpoints ~$7/mo each). Expect roughly **$40–70/month** for the dev
+> profile if left running. Tear it down with `terraform destroy` when you're done.
+
+### 1. Clone and confirm which account you're pointed at
+```bash
+git clone https://github.com/anirudhmarc/hackathonhub.git
+cd hackathonhub
+aws sts get-caller-identity          # ← this MUST be the target account
+```
+Every later step derives from these credentials. Getting this wrong is the single most common cause
+of a failed first deploy.
+
+### 2. Bootstrap the Terraform state backend
+```bash
+./bootstrap-backend.sh dev
+```
+Creates `hackhub-tfstate-<your_account_id>` + `hackhub-tflock` in your account and writes
+`env/dev/backend.config`. See [Bootstrap the state backend](#bootstrap-the-state-backend-first-step-after-cloning)
+for what it does and how to do it by hand.
+
+### 3. Create your tfvars
+`env/dev/dev.tfvars` is gitignored (it holds the DB password), so a fresh clone has none. Copy the
+template:
+```bash
+cp env/dev/dev.tfvars.example env/dev/dev.tfvars
+```
+Then edit at minimum:
+
+| Variable | Why |
+| --- | --- |
+| `db_password` | **Required** — the only variable with no default. Use a strong, unique value. |
+| `admin_email` | Receives the default users' Cognito verification email. |
+| `aws_region` | Defaults to `us-east-1` in the template. |
+| `vpc_cidr` | Must not overlap anything else in the account. |
+
+### 4. Init and apply
+```bash
+terraform init -reconfigure -backend-config=env/dev/backend.config
+terraform plan  -var-file=env/dev/dev.tfvars     # review before creating anything
+terraform apply -var-file=env/dev/dev.tfvars
+```
+Budget **25–40 minutes** — RDS provisioning dominates, and the `frontend` module runs `npm install`
+plus a Vite build for all three React apps on your machine before syncing them to S3.
+
+Two things happen automatically at the end of `apply`, so there is no separate schema step:
+- `db_init.tf` invokes `HackhubDbInitializer`, which creates all 11 tables.
+- Cognito is seeded with four users — `admin@hackhub.com`, `host@hackhub.com`, `judge@hackhub.com`,
+  `participant@hackhub.com` — one per group (`create_default_users` defaults to `true`).
+
+### 5. Collect the outputs
+```bash
+terraform output       # portal URLs, api_gateway_url, Cognito IDs, RDS endpoint
+terraform output -raw admin_portal_url
+```
+
+### 6. Set a usable admin password
+The seeded users land in `FORCE_CHANGE_PASSWORD`, which blocks both the portal and
+`USER_PASSWORD_AUTH`. Promote one to a permanent password:
+```bash
+POOL=$(terraform output -raw cognito_user_pool_id)
+aws cognito-idp admin-set-user-password --user-pool-id "$POOL" \
+  --username admin@hackhub.com --password '<StrongPassw0rd!>' --permanent
+```
+
+### 7. Log in and create the first hackathon
+Open the admin portal URL from step 5, sign in as `admin@hackhub.com`, and create a hackathon.
+`CreateHackathon` provisions that tenant's defaults in one transaction — a `General` track, the
+`__SYSTEM__` problem, 2 judging stages, and 4 rubric rows. Then add judges and participants.
+
+<details>
+<summary>Prefer to create it over the API?</summary>
+
+```bash
+API=$(terraform output -raw api_gateway_url)
+CLIENT=$(terraform output -raw cognito_client_id)
+TOKEN=$(aws cognito-idp initiate-auth --client-id "$CLIENT" --auth-flow USER_PASSWORD_AUTH \
+  --auth-parameters USERNAME=admin@hackhub.com,PASSWORD='<StrongPassw0rd!>' \
+  --query 'AuthenticationResult.IdToken' --output text)
+
+curl -X POST "$API/hackathons" -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"My Hackathon","submission_start":"2026-07-01T00:00:00Z","submission_end":"2026-12-31T23:59:00Z"}'
+```
+</details>
+
+### Fresh-deploy troubleshooting
+
+| Symptom | Cause and fix |
+| --- | --- |
+| `init` → `HeadObject ... 403 Forbidden` | `backend.config` names a bucket in an account you don't own. Run `./bootstrap-backend.sh dev --force`, re-init. |
+| `No value for required variable "db_password"` | Step 3 skipped — you have no `env/dev/dev.tfvars`. |
+| `InvalidClientTokenId` / `ExpiredToken` | Credentials expired mid-apply. Refresh, re-run `apply`; Terraform resumes from state. |
+| Frontend build fails during `apply` | Node too old or missing. Build manually: `cd frontends/<app> && npm install && npm run build`. |
+| Portal loads but every API call 401s | Password still `FORCE_CHANGE_PASSWORD` — do step 6. |
+| `CIDR ... conflicts with existing` | `vpc_cidr` overlaps another VPC in the account. Pick a free range. |
+
+### Tear it down
+```bash
+terraform destroy -var-file=env/dev/dev.tfvars
+```
+This leaves the state bucket and lock table behind on purpose — they aren't managed by this
+Terraform. Delete them by hand if you want the account fully clean. On prod, `destroy` is blocked
+until you flip `db_deletion_protection = false`.
+
+---
+
+### Bootstrap the state backend (first step after cloning)
+This repo ships **no** `env/<env>/backend.config` — that file is gitignored because the state bucket
+name embeds an **AWS account ID**, so it can only ever be correct for one account. Generate your own
+before the first `init`:
+
+```bash
+./bootstrap-backend.sh dev      # or: prod
+```
+
+The script reads the account ID from *your* credentials (`aws sts get-caller-identity`), creates the
+state bucket `hackhub-tfstate-<your_account_id>` (versioned, AES256, public access blocked) and the
+`hackhub-tflock` lock table if they don't already exist, then renders `env/dev/backend.config` from
+the committed `env/dev/backend.config.example` template. It is idempotent and never deletes or
+reconfigures existing state — re-running it on a bootstrapped account is a no-op.
+
+Override the defaults with env vars if you need to: `PROJECT_NAME=myproj REGION=eu-west-1
+./bootstrap-backend.sh dev`. Pass `--force` to overwrite an existing `backend.config`.
+
+<details>
+<summary>Prefer to do it by hand?</summary>
+
+```bash
+ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)   # the TARGET account
+REGION=us-east-1
+BUCKET="hackhub-tfstate-${ACCOUNT_ID}"
+
+aws s3api create-bucket --bucket "$BUCKET" --region "$REGION"   # add --create-bucket-configuration LocationConstraint=$REGION outside us-east-1
+aws s3api put-bucket-versioning --bucket "$BUCKET" --versioning-configuration Status=Enabled
+aws s3api put-bucket-encryption --bucket "$BUCKET" \
+  --server-side-encryption-configuration '{"Rules":[{"ApplyServerSideEncryptionByDefault":{"SSEAlgorithm":"AES256"}}]}'
+aws s3api put-public-access-block --bucket "$BUCKET" \
+  --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+
+aws dynamodb create-table --table-name hackhub-tflock --region "$REGION" \
+  --attribute-definitions AttributeName=LockID,AttributeType=S \
+  --key-schema AttributeName=LockID,KeyType=HASH --billing-mode PAY_PER_REQUEST
+
+cp env/dev/backend.config.example env/dev/backend.config   # replace <ACCOUNT_ID>
+```
+</details>
+
+Each account is fully **independent**: its own bucket, its own state, its own resources. Nothing is
+shared between clones — bootstrapping in your account gives you an empty state, so the first `apply`
+provisions a complete new stack.
+
+> **Symptom of skipping this, or of pointing at an account you don't own:** `terraform init` fails
+> with `Error refreshing state: ... HeadObject ... 403 Forbidden`. S3 answers `403` (not `404`) for a
+> bucket that exists under someone else's account, so a stale `bucket = ...-<someone-elses-account>`
+> looks like a permissions bug. Re-run `./bootstrap-backend.sh <env>` to fix it.
 
 ### Per-environment state
-dev and prod share the same state bucket + lock table but use **distinct state keys** and
-distinct `vpc_cidr`. Config lives under `env/<env>/`.
+Within one account, dev and prod share the same state bucket + lock table but use **distinct state
+keys** (`.../dev/...` vs `.../prod/...`) and distinct `vpc_cidr`. Config lives under `env/<env>/`.
 
 ### Deploy to dev
 ```bash
+./bootstrap-backend.sh dev   # first time in this account only
 terraform init -reconfigure -backend-config=env/dev/backend.config
 terraform plan  -var-file=env/dev/dev.tfvars
 terraform apply -var-file=env/dev/dev.tfvars
@@ -137,6 +305,7 @@ terraform apply -var-file=env/dev/dev.tfvars
 
 ### Deploy to prod
 ```bash
+./bootstrap-backend.sh prod  # first time in this account only
 terraform init -reconfigure -backend-config=env/prod/backend.config
 # create env/prod/prod.tfvars locally (gitignored) — see variables below
 terraform apply -var-file=env/prod/prod.tfvars
@@ -156,7 +325,20 @@ judges/participants.
 
 ## 🔧 Configuration (tfvars)
 
-Each env has its own gitignored tfvars. Key variables (defaults in `variables.tf`):
+Each env has its own gitignored tfvars, created from the committed template:
+
+```bash
+cp env/dev/dev.tfvars.example env/dev/dev.tfvars      # or env/prod/prod.tfvars.example
+```
+
+`db_password` is the **only** variable with no default — everything else falls back to
+`variables.tf`.
+
+> The root-level `terraform.tfvars.example` is **legacy** (single-env, `ap-southeast-2`) and predates
+> the `env/<env>/` layout. Use the `env/` templates above. Don't copy it to `terraform.tfvars` —
+> Terraform auto-loads that filename, which then shadows parts of your `-var-file`.
+
+Key variables:
 
 ```hcl
 project_name = "hackhub"   # resource name prefix
@@ -188,8 +370,10 @@ scoring_end_date                = "2026-06-28T23:59:00+08:00"
 scoring_lock_date               = "2026-06-29T00:00:00+08:00"
 ```
 
-**Secrets are never committed:** `*.tfvars`, `env/**/*.tfvars`, `.env`, and `*.tfstate` are
-gitignored. Each frontend's `.env` is generated during `terraform apply`.
+**Secrets and account-specific config are never committed:** `*.tfvars`, `env/**/*.tfvars`, `.env`,
+`*.tfstate`, and `env/**/backend.config` are gitignored — only the `.example` templates are tracked.
+Each frontend's `.env` is generated during `terraform apply`, and each `backend.config` by
+`./bootstrap-backend.sh`.
 
 ---
 

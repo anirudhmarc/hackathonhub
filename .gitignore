@@ -14,6 +14,13 @@ terraform.tfvars
 env/**/*.tfvars
 terraform.tfstate
 
+# Terraform backend config — the bucket name embeds an AWS ACCOUNT ID, so this
+# is per-account and must not be committed. Generate yours with:
+#   ./bootstrap-backend.sh <dev|prod>
+# The committed env/**/backend.config.example templates are the source of truth.
+env/**/backend.config
+!env/**/backend.config.example
+
 # Participant PII / credential exports — never commit
 participants.csv
 participant_credentials.csv
